@@ -1,0 +1,9 @@
+*.py?
+.coverage
+.eggs
+.tox
+dist/*
+build/*
+*.egg-info
+docs/.build
+slapdtest-*
