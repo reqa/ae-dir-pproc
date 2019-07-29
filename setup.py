@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-package/install counter
+package/install aedir_pproc
 """
 
 import sys
