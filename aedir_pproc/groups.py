@@ -1,13 +1,9 @@
 #!/opt/ae-dir/bin/python
 # -*- coding: utf-8 -*-
 """
-This script performs two tasks:
+aedir_pproc.groups - Performs two tasks:
 1. Removes inactive members from static group entries referenced by 'memberOf'.
 2. Updates all static aeGroup entries which contain attribute 'memberURL'
-
-It is designed to run as a CRON job.
-
-Author: Michael Ströder <michael@stroeder.com>
 """
 
 from __future__ import absolute_import

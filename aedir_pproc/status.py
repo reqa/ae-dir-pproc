@@ -1,11 +1,7 @@
 #!/opt/ae-dir/bin/python
 # -*- coding: utf-8 -*-
 """
-This script updates aeStatus of expired AE-DIR entries (aeObject)
-
-It is designed to run as a CRON job.
-
-Author: Michael Ströder <michael@stroeder.com>
+aedir_pproc.status - updates aeStatus of expired AE-DIR entries (aeObject)
 """
 
 from __future__ import absolute_import

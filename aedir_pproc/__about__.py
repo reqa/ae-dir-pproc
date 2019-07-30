@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-aedir_update.__about__ - Meta information
+aedir_pproc.__about__ - Meta information
 """
 
 from __future__ import absolute_import

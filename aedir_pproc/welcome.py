@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-aedir_proc.welcome -- Send welcome e-mail to new users which have not set a password yet
+aedir_pproc.welcome -- Send welcome e-mail to new users which have not set a password yet
 """
 
 from __future__ import absolute_import
-
-from ..__about__ import __version__, __author__, __license__
 
 # from Python's standard lib
 import sys
@@ -28,6 +26,8 @@ import mailutil
 
 # the separate python-aedir module
 import aedir.process
+
+from .__about__ import __version__, __author__, __license__
 
 # Import constants from configuration module
 from aedirpwd_cnf import \

@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Module package aedir_update
-
-Author: Michael Ströder <michael@stroeder.com>
+Module package aedir_pproc
 """
 
 from __future__ import absolute_import

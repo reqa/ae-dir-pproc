@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-Sync the personnel attributes (cn, sn, givenName, mail)
+aedir_pproc.persattrs - Sync the personnel attributes (cn, sn, givenName, mail)
 from aePerson to aeUser entries
 """
 
