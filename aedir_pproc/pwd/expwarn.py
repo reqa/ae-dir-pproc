@@ -64,7 +64,6 @@ NOTIFY_OLDEST_TIMESPAN = 1.75 * 86400.0
 # Import constants from configuration module
 from aedirpwd_cnf import \
     APP_PATH_PREFIX, \
-    PWD_LDAP_URL, \
     SMTP_DEBUGLEVEL, \
     SMTP_FROM, \
     SMTP_LOCALHOSTNAME, \
@@ -89,7 +88,6 @@ class AEDIRPwdJob(aedir.process.AEProcess):
     Job instance
     """
     script_version = __version__
-    ldap_url = PWD_LDAP_URL
     notify_oldest_timespan = NOTIFY_OLDEST_TIMESPAN
     user_attrs = [
         'objectClass',

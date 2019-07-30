@@ -41,7 +41,6 @@ from aedirpwd_cnf import \
     NOTIFY_OLDEST_TIMESPAN, \
     NOTIFY_SUCCESSFUL_MOD, \
     PWD_ADMIN_LEN, \
-    PWD_LDAP_URL, \
     SERVER_ID, \
     SMTP_DEBUGLEVEL, \
     SMTP_FROM, \
@@ -59,7 +58,6 @@ class AEDIRPwdJob(aedir.process.AEProcess):
     Job instance
     """
     script_version = __version__
-    ldap_url = PWD_LDAP_URL
     notify_oldest_timespan = NOTIFY_OLDEST_TIMESPAN
     user_attrs = [
         'objectClass',
