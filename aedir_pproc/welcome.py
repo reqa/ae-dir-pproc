@@ -266,16 +266,22 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                     admin_dn,
                     filterstr=FILTERSTR_USER.encode('utf-8'),
                     attrlist=self.admin_attrs,
-                )
-            except ldap0.NO_SUCH_OBJECT:
-                admin_entry = {}
-            admin_entry = admin_entry or {}
-            if not admin_entry:
+                ) or {}
+            except (ldap0.NO_SUCH_OBJECT, ldap0.INSUFFICIENT_ACCESS) as ldap_err:
                 self.logger.warning(
-                    'Admin entry %r referenced in %r not found',
+                    'Error reading admin entry %r referenced by %r: %s',
                     admin_dn,
                     ldap_dn,
+                    ldap_err,
                 )
+                admin_entry = {}
+            else:
+                if not admin_entry:
+                    self.logger.warning(
+                        'Empty result reading admin entry %r referenced by %r',
+                        admin_dn,
+                        ldap_dn,
+                    )
             msg_attrs['admin_cn'] = admin_entry.get(
                 'cn', ['unknown']
             )[0].decode('utf-8')
