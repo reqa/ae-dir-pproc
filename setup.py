@@ -29,21 +29,13 @@ setup(
     packages=find_packages(exclude=['tests']),
     package_dir={'': '.'},
     test_suite='tests',
-    python_requires='==2.7.*',
+    python_requires='>=3.6',
     include_package_data=True,
     data_files=[],
     install_requires=[
         'setuptools',
-        'aedir',
-        'web.py',
-        'mailutil',
+        'aedir>=0.5.1',
+        'mailutil>=0.3.0',
     ],
     zip_safe=False,
-    entry_points={
-        'console_scripts': [
-#            'aedir_update_groups=%s.groups:main' % (PYPI_NAME),
-#            'aedir_update_status=%s.status:main' % (PYPI_NAME),
-#            'aedir_update_persattrs=%s.persattrs:main' % (PYPI_NAME),
-        ],
-    }
 )
