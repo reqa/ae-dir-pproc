@@ -118,7 +118,10 @@ def pwd_hash(pw_clear, hash_algo_oid):
     """
     Generate un-salted hash as hex-digest
     """
-    return hashlib.new(HASH_OID2NAME[hash_algo_oid], pw_clear).hexdigest()
+    return hashlib.new(
+        HASH_OID2NAME[hash_algo_oid],
+        pw_clear.encode('utf-8'),
+    ).hexdigest()
 
 def read_template_file(filename):
     """
@@ -303,7 +306,7 @@ class BaseApp(Default):
             filterstr_inputs_dict[key] = ldap0.filter.escape_str(value)
         filterstr = (
             self.filterstr_template.format(**filterstr_inputs_dict)
-        ).encode('utf-8')
+        )
         self.logger.debug(
             '%s.search_user_entry() base=%r filterstr=%r',
             self.__class__.__name__,
@@ -311,13 +314,12 @@ class BaseApp(Default):
             filterstr,
         )
         try:
-            user_dn, user_entry, user_controls = self.ldap_conn.find_unique_entry(
+            user = self.ldap_conn.find_unique_entry(
                 self.ldap_conn.ldap_url_obj.dn,
                 ldap0.SCOPE_SUBTREE,
                 filterstr=filterstr,
                 attrlist=USER_ATTRS,
-                serverctrls=[PWDPOLICY_DEREF_CONTROL],
-                add_ctrls=1,
+                req_ctrls=[PWDPOLICY_DEREF_CONTROL],
             )
         except ldap0.LDAPError as ldap_err:
             self.logger.warn(
@@ -326,10 +328,11 @@ class BaseApp(Default):
                 ldap_err,
             )
             raise
-        if user_controls:
-            _, deref_entry = user_controls[0].derefRes['pwdPolicySubentry'][0]
-            user_entry.update(deref_entry)
-        return user_dn, user_entry
+        if user.ctrls:
+            user.entry_b.update(
+                user.ctrls[0].derefRes['pwdPolicySubentry'][0].entry_b
+            )
+        return user.dn_s, user.entry_s
 
     def _open_ldap_conn(self):
         """
@@ -346,7 +349,7 @@ class BaseApp(Default):
         self.logger.debug(
             '%s - Successfully bound to %r as %r',
             self.__class__.__name__,
-            self.ldap_conn.ldap_url_obj.initializeUrl(),
+            self.ldap_conn.ldap_url_obj.connect_uri(),
             self.ldap_conn.whoami_s(),
         )
         return # end of _open_ldap_conn()
@@ -358,7 +361,7 @@ class BaseApp(Default):
         self.logger.debug(
             '%s - Unbind from %r',
             self.__class__.__name__,
-            self.ldap_conn.ldap_url_obj.initializeUrl(),
+            self.ldap_conn.ldap_url_obj.connect_uri(),
         )
         try:
             self.ldap_conn.unbind_s()
@@ -366,7 +369,7 @@ class BaseApp(Default):
             self.logger.warn(
                 '%s - Error during unbinding from %r: %s',
                 self.__class__.__name__,
-                self.ldap_conn.ldap_url_obj.initializeUrl(),
+                self.ldap_conn.ldap_url_obj.connect_uri(),
                 ldap_err,
             )
         return # end of _close_ldap_conn()
@@ -442,7 +445,7 @@ class CheckPassword(BaseApp):
             self.ldap_conn.simple_bind_s(
                 user_dn,
                 self.form.d.oldpassword.encode('utf-8'),
-                serverctrls=[
+                req_ctrls=[
                     PasswordPolicyControl(),
                     self._sess_track_ctrl(),
                 ]
@@ -557,13 +560,13 @@ class ChangePassword(BaseApp):
             self.ldap_conn.simple_bind_s(
                 user_dn,
                 self.form.d.oldpassword.encode('utf-8'),
-                serverctrls=[self._sess_track_ctrl()],
+                req_ctrls=[self._sess_track_ctrl()],
             )
             self.ldap_conn.passwd_s(
                 user_dn,
                 None,
                 self.form.d.newpassword1.encode('utf-8'),
-                serverctrls=[self._sess_track_ctrl(user_dn)],
+                req_ctrls=[self._sess_track_ctrl(user_dn)],
             )
         except ldap0.INVALID_CREDENTIALS:
             res = RENDER.changepw_form(
@@ -583,7 +586,7 @@ class ChangePassword(BaseApp):
             res = RENDER.changepw_action(
                 self.form.d.username,
                 user_dn,
-                self.ldap_conn.ldap_url_obj.initializeUrl()
+                self.ldap_conn.ldap_url_obj.connect_uri()
             )
         return res
 
@@ -629,8 +632,8 @@ class RequestPasswordReset(BaseApp):
             admin_addrs = None
         else:
             admin_addrs = [
-                ldap_entry['mail'][0]
-                for _, ldap_entry in ldap_results or []
+                res.entry_s['mail'][0]
+                for res in ldap_results or []
             ]
         return sorted(set(admin_addrs or PWD_ADMIN_MAILTO))
 
@@ -644,7 +647,7 @@ class RequestPasswordReset(BaseApp):
             tls_args=SMTP_TLSARGS,
             debug_level=SMTP_DEBUGLEVEL
         )
-        to_addr = user_entry['mail'][0].decode('utf-8')
+        to_addr = user_entry['mail'][0]
         default_headers = (
             ('From', SMTP_FROM),
             ('Date', email.utils.formatdate(time.time(), True)),
@@ -659,10 +662,10 @@ class RequestPasswordReset(BaseApp):
                 'temppassword2': temp_pwd_clear[len(temp_pwd_clear)-pwd_admin_len:],
                 'remote_ip': self.remote_ip,
                 'fromaddr': SMTP_FROM,
-                'userdn': user_dn.decode('utf-8'),
+                'userdn': user_dn,
                 'web_ctx_host': web.ctx.host,
                 'app_path_prefix': APP_PATH_PREFIX,
-                'ldap_uri': self.ldap_conn.ldap_url_obj.initializeUrl(),
+                'ldap_uri': self.ldap_conn.ldap_url_obj.connect_uri(),
             }
             smtp_message = read_template_file(EMAIL_TEMPLATE_ADMIN).format(**user_data_admin)
             smtp_subject = EMAIL_SUBJECT_ADMIN.format(**user_data_admin)
@@ -689,17 +692,17 @@ class RequestPasswordReset(BaseApp):
             'temppassword1': temp_pwd_clear[:len(temp_pwd_clear)-pwd_admin_len],
             'remote_ip': self.remote_ip,
             'fromaddr': SMTP_FROM,
-            'userdn': user_dn.decode('utf-8'),
+            'userdn': user_dn,
             'web_ctx_host': web.ctx.host,
             'app_path_prefix': APP_PATH_PREFIX,
-            'ldap_uri': self.ldap_conn.ldap_url_obj.initializeUrl(),
+            'ldap_uri': self.ldap_conn.ldap_url_obj.connect_uri(),
             'admin_email_addrs': u'\n'.join(admin_addrs),
         }
         smtp_message = read_template_file(EMAIL_TEMPLATE_PERSONAL).format(**user_data_user)
         smtp_subject = EMAIL_SUBJECT_PERSONAL.format(**user_data_user)
         smtp_conn.send_simple_message(
             SMTP_FROM,
-            [to_addr.encode('utf-8')],
+            [to_addr],
             'utf-8',
             default_headers+(
                 ('Subject', smtp_subject),
@@ -733,17 +736,17 @@ class RequestPasswordReset(BaseApp):
             )[0]
         )
         ldap_mod_list = [
-            (ldap0.MOD_REPLACE, 'msPwdResetPasswordHash', [temp_pwd_hash]),
-            (ldap0.MOD_REPLACE, 'msPwdResetTimestamp', [ldap0.functions.strf_secs(current_time)]),
+            (ldap0.MOD_REPLACE, b'msPwdResetPasswordHash', [temp_pwd_hash.encode('ascii')]),
+            (ldap0.MOD_REPLACE, b'msPwdResetTimestamp', [ldap0.functions.strf_secs(current_time).encode('ascii')]),
             (
                 ldap0.MOD_REPLACE,
-                'msPwdResetExpirationTime',
-                [ldap0.functions.strf_secs(current_time+pwd_expire_timespan)],
+                b'msPwdResetExpirationTime',
+                [ldap0.functions.strf_secs(current_time+pwd_expire_timespan).encode('ascii')],
             ),
             (
                 ldap0.MOD_REPLACE,
-                'msPwdResetEnabled',
-                user_entry.get('msPwdResetEnabled', [PWD_RESET_ENABLED]),
+                b'msPwdResetEnabled',
+                [user_entry.get('msPwdResetEnabled', [PWD_RESET_ENABLED])[0].encode('ascii')],
             ),
         ]
         old_objectclasses = [
@@ -751,12 +754,12 @@ class RequestPasswordReset(BaseApp):
             for oc in user_entry['objectClass']
         ]
         if not 'mspwdresetobject' in old_objectclasses:
-            ldap_mod_list.append((ldap0.MOD_ADD, 'objectClass', ['msPwdResetObject']))
+            ldap_mod_list.append((ldap0.MOD_ADD, b'objectClass', [b'msPwdResetObject']))
         if pwd_admin_len:
             ldap_mod_list.append(
                 (
                     ldap0.MOD_REPLACE,
-                    'msPwdResetAdminPw',
+                    b'msPwdResetAdminPw',
                     [temp_pwd_clear[-pwd_admin_len:].encode('utf-8')],
                 )
             )
@@ -764,7 +767,7 @@ class RequestPasswordReset(BaseApp):
             self.ldap_conn.modify_s(
                 user_dn,
                 ldap_mod_list,
-                serverctrls=[self._sess_track_ctrl()],
+                req_ctrls=[self._sess_track_ctrl()],
             )
         except ldap0.LDAPError:
             res = RENDER.error(u'Internal error!')
@@ -848,10 +851,10 @@ class FinishPasswordReset(ChangePassword):
     def _ldap_user_operations(self, user_dn, user_entry, temp_pwd_hash, new_password_ldap):
         pwd_admin_len = int(user_entry.get('msPwdResetAdminPwLen', [str(PWD_ADMIN_LEN)])[0])
         ldap_mod_list = [
-            (ldap0.MOD_DELETE, attr_type, attr_values)
+            (ldap0.MOD_DELETE, attr_type.encode('ascii'), attr_values)
             for attr_type, attr_values in (
-                ('objectClass', ['msPwdResetObject']),
-                ('msPwdResetPasswordHash', [temp_pwd_hash]),
+                ('objectClass', [b'msPwdResetObject']),
+                ('msPwdResetPasswordHash', [temp_pwd_hash.encode('ascii')]),
                 ('msPwdResetTimestamp', None),
                 ('msPwdResetExpirationTime', None),
                 ('msPwdResetEnabled', None),
@@ -859,13 +862,13 @@ class FinishPasswordReset(ChangePassword):
         ]
         if pwd_admin_len:
             ldap_mod_list.append(
-                (ldap0.MOD_DELETE, 'msPwdResetAdminPw', None)
+                (ldap0.MOD_DELETE, b'msPwdResetAdminPw', None)
             )
         try:
             self.ldap_conn.modify_s(
                 user_dn,
                 ldap_mod_list,
-                serverctrls=[self._sess_track_ctrl(user_dn)],
+                req_ctrls=[self._sess_track_ctrl(user_dn)],
             )
         except ldap0.LDAPError as ldap_err:
             self.logger.warn(
@@ -880,7 +883,7 @@ class FinishPasswordReset(ChangePassword):
                 user_dn,
                 None,
                 new_password_ldap,
-                serverctrls=[self._sess_track_ctrl(user_dn)],
+                req_ctrls=[self._sess_track_ctrl(user_dn)],
             )
         except ldap0.LDAPError as ldap_err:
             self.logger.warn(
@@ -900,7 +903,7 @@ class FinishPasswordReset(ChangePassword):
         temppassword2 = self.form.d.temppassword2
         pwd_admin_len = int(user_entry.get('msPwdResetAdminPwLen', [str(PWD_ADMIN_LEN)])[0])
         temp_pwd_hash = pwd_hash(
-            u''.join((temppassword1, temppassword2)).encode('utf-8'),
+            u''.join((temppassword1, temppassword2)),
             user_entry.get('msPwdResetHashAlgorithm', [PWD_TMP_HASH_ALGO])[0],
         )
         pw_input_check_msg = self._check_pw_input(user_entry)
