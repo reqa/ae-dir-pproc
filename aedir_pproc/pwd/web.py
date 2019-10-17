@@ -16,7 +16,7 @@ import socket
 import smtplib
 import hashlib
 
-from urllib import quote_plus as url_quote_plus
+from urllib.parse import quote_plus as url_quote_plus
 
 import email.utils
 
@@ -26,8 +26,8 @@ import web
 # from ldap0 package
 import ldap0
 import ldap0.functions
+import ldap0.filter
 from ldap0.err import PasswordPolicyException, PasswordPolicyExpirationWarning
-from ldap0.filter import escape_filter_chars
 from ldap0.controls.ppolicy import PasswordPolicyControl
 from ldap0.controls.sessiontrack import SessionTrackingControl
 from ldap0.controls.sessiontrack import SESSION_TRACKING_FORMAT_OID_USERNAME
@@ -174,7 +174,7 @@ TEMP1PASSWORD_FIELD = web.form.Password(
     'temppassword1',
     web.form.notnull,
     web.form.regexp(
-        ur'^[%s]+$' % re.escape(PWD_TMP_CHARS),
+        u'^[%s]+$' % (re.escape(PWD_TMP_CHARS),),
         u'Invalid input format.'
     ),
     description=u'Temporary password part #1'
@@ -184,7 +184,7 @@ TEMP2PASSWORD_FIELD = web.form.Password(
     'temppassword2',
     #web.form.notnull,
     web.form.regexp(
-        ur'^[%s]*$' % re.escape(PWD_TMP_CHARS),
+        r'^[%s]*$' % (re.escape(PWD_TMP_CHARS),),
         u'Invalid input format.'
     ),
     description=u'Temporary password part #2'
@@ -297,10 +297,10 @@ class BaseApp(Default):
         Search a user entry for the user specified by username
         """
         filterstr_inputs_dict = {
-            'currenttime': escape_filter_chars(ldap0.functions.strf_secs(time.time())),
+            'currenttime': ldap0.filter.escape_str(ldap0.functions.strf_secs(time.time())),
         }
         for key, value in inputs.items():
-            filterstr_inputs_dict[key] = escape_filter_chars(value)
+            filterstr_inputs_dict[key] = ldap0.filter.escape_str(value)
         filterstr = (
             self.filterstr_template.format(**filterstr_inputs_dict)
         ).encode('utf-8')
@@ -455,11 +455,11 @@ class CheckPassword(BaseApp):
                 ldap_err,
             )
             return RENDER.checkpw_form(self.form.d.username, u'Wrong password!')
-        except PasswordPolicyExpirationWarning, ppolicy_error:
-            expire_time_str = unicode(time.strftime(
+        except PasswordPolicyExpirationWarning as ppolicy_error:
+            expire_time_str = time.strftime(
                 TIME_DISPLAY_FORMAT,
                 time.localtime(current_time+ppolicy_error.timeBeforeExpiration)
-            ))
+            )
             self.logger.info(
                 '%s.handle_user_request() Password of %r will expire soon at %r (%d seconds)',
                 self.__class__.__name__,
@@ -471,10 +471,10 @@ class CheckPassword(BaseApp):
                 self.form.d.username,
                 u'Password will expire soon at %s. Change it now!' % (expire_time_str)
             )
-        except PasswordPolicyException, ppolicy_error:
+        except PasswordPolicyException as ppolicy_error:
             return RENDER.changepw_form(
                 self.form.d.username,
-                unicode(str(ppolicy_error))
+                str(ppolicy_error)
             )
         except ldap0.LDAPError:
             return RENDER.error(u'Internal error!')
@@ -486,11 +486,9 @@ class CheckPassword(BaseApp):
         else:
             pwd_changed_timestamp = ldap0.functions.strp_secs(user_entry['pwdChangedTime'][0])
             expire_timestamp = pwd_changed_timestamp+pwd_max_age
-            valid_until = unicode(
-                time.strftime(
-                    TIME_DISPLAY_FORMAT,
-                    time.localtime(expire_timestamp)
-                )
+            valid_until = time.strftime(
+                TIME_DISPLAY_FORMAT,
+                time.localtime(expire_timestamp)
             )
         # Finally render output page with success message
         return RENDER.checkpw_action(
@@ -572,11 +570,11 @@ class ChangePassword(BaseApp):
                 self.form.d.username,
                 u'Old password wrong!',
             )
-        except ldap0.CONSTRAINT_VIOLATION, ldap_err:
+        except ldap0.CONSTRAINT_VIOLATION as ldap_err:
             res = RENDER.changepw_form(
                 self.form.d.username,
                 u'Password rules violation: {0}'.format(
-                    unicode(ldap_err.args[0]['info']),
+                    ldap_err.args[0]['info'].decode('utf-8'),
                 ),
             )
         except ldap0.LDAPError:
@@ -933,7 +931,7 @@ class FinishPasswordReset(ChangePassword):
                 (
                     u'Constraint violation (password rules): {0}'
                     u' / You have to request password reset again!'
-                ).format(unicode(ldap_err.args[0]['info']))
+                ).format(ldap_err.args[0]['info'].decode('utf-8'))
             )
         except ldap0.LDAPError:
             res = RENDER.error(u'Internal error!')

@@ -12,11 +12,10 @@ from __future__ import absolute_import
 # Imports
 #-----------------------------------------------------------------------
 
-import os
-
 # from ldap0 package
 import ldap0
-from ldap0.filter import escape_filter_chars, compose_filter, map_filter_parts
+import ldap0.filter
+from ldap0.filter import compose_filter, map_filter_parts
 from ldap0.controls.deref import DereferenceControl
 import ldap0.ldapurl
 import aedir

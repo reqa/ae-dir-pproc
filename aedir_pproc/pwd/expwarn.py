@@ -56,7 +56,7 @@ PWD_EXPIRYWARN_FILTER_TMPL = (
 
 # Filter string template for finding an active user entry
 # mainly used to inform about who did something and send e-mail to
-FILTERSTR_USER = ur'(&(objectClass=aeUser)(aeStatus=0)(displayName=*)(mail=*))'
+FILTERSTR_USER = '(&(objectClass=aeUser)(aeStatus=0)(displayName=*)(mail=*))'
 
 # Maximum timespan to search for password-less entries in the past
 NOTIFY_OLDEST_TIMESPAN = 1.75 * 86400.0
@@ -273,7 +273,7 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                         ),
                         smtp_message,
                     )
-                except smtplib.SMTPRecipientsRefused, smtp_err:
+                except smtplib.SMTPRecipientsRefused as smtp_err:
                     self.logger.error('Recipient %r rejected: %s', to_addr, smtp_err)
                     continue
                 else:

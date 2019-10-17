@@ -190,7 +190,7 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                 ),
                 smtp_message,
             )
-        except smtplib.SMTPRecipientsRefused, smtp_error:
+        except smtplib.SMTPRecipientsRefused as smtp_error:
             self.logger.error(
                 'Recipient %r rejected: %s',
                 to_addr,

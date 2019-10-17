@@ -13,16 +13,12 @@ from __future__ import absolute_import
 
 # Modules from Python's standard library
 import sys
-import os
 import time
-import logging
-from logging.handlers import SysLogHandler
 
 # from ldap0 package
 import ldap0
 import ldap0.modlist
 import ldap0.functions
-from ldap0.filter import time_span_filter
 
 import aedir
 import aedir.process
