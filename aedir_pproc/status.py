@@ -64,7 +64,7 @@ class AEStatusUpdater(aedir.process.AEProcess):
         self.logger.debug('expiry_filter = %r', expiry_filter)
         try:
             msg_id = self.ldap_conn.search(
-                self.ldap_conn.find_search_base(),
+                self.ldap_conn.search_base,
                 ldap0.SCOPE_SUBTREE,
                 expiry_filter,
                 attrlist=['aeStatus', 'aeExpiryStatus'],

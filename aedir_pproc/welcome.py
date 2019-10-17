@@ -108,7 +108,7 @@ class AEDIRPwdJob(aedir.process.AEProcess):
             )
         ).encode('utf-8')
         ldap_results = self.ldap_conn.search_s(
-            self.ldap_conn.find_search_base(),
+            self.ldap_conn.search_base,
             ldap0.SCOPE_SUBTREE,
             filterstr=expiration_filterstr,
             attrlist=[
@@ -221,7 +221,7 @@ class AEDIRPwdJob(aedir.process.AEProcess):
             nopassword_filterstr,
         )
         ldap_results = self.ldap_conn.search_s(
-            self.ldap_conn.find_search_base(),
+            self.ldap_conn.search_base,
             ldap0.SCOPE_SUBTREE,
             filterstr=nopassword_filterstr,
             attrlist=self.user_attrs,

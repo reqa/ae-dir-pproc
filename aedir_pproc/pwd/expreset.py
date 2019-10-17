@@ -103,7 +103,7 @@ class AEDIRPwdJob(aedir.process.AEProcess):
             FILTERSTR_EXPIRE.format(currenttime=current_run_timestr)
         ).encode('utf-8')
         ldap_results = self.ldap_conn.search_s(
-            self.ldap_conn.find_search_base(),
+            self.ldap_conn.search_base,
             ldap0.SCOPE_SUBTREE,
             filterstr=expiration_filterstr,
             attrlist=[

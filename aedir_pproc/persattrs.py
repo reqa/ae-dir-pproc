@@ -100,11 +100,11 @@ class SyncProcess(aedir.process.TimestampStateMixin, aedir.process.AEProcess):
 
         self.logger.debug(
             'Searching in %r with filter %r',
-            self.ldap_conn.find_search_base(),
+            self.ldap_conn.search_base,
             aeperson_filterstr,
         )
         msg_id = self.ldap_conn.search(
-            self.ldap_conn.find_search_base(),
+            self.ldap_conn.search_base,
             ldap0.SCOPE_SUBTREE,
             aeperson_filterstr,
             attrlist=AEDIR_AEPERSON_ATTRS,
@@ -117,7 +117,7 @@ class SyncProcess(aedir.process.TimestampStateMixin, aedir.process.AEProcess):
                 self.aeperson_counter += 1
 
                 aeuser_result = self.ldap_conn.search_s(
-                    self.ldap_conn.find_search_base(),
+                    self.ldap_conn.search_base,
                     ldap0.SCOPE_SUBTREE,
                     '(&(objectClass=aeUser)(aePerson=%s))' % (aeperson_dn),
                     attrlist=AEDIR_AEPERSON_ATTRS+['uid', 'uidNumber', 'displayName'],

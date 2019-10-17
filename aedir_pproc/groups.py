@@ -146,7 +146,7 @@ class AEGroupUpdater(aedir.process.AEProcess):
         for group_object_class, member_attrs in MEMBER_ATTRS_MAP.items():
             member_map_attr, member_user_attr = member_attrs
             msg_id = self.ldap_conn.search(
-                self.ldap_conn.find_search_base(),
+                self.ldap_conn.search_base,
                 ldap0.SCOPE_SUBTREE,
                 '(&(objectClass={0})(!({1}=*))(aeStatus=0))'.format(
                     group_object_class,
@@ -229,7 +229,7 @@ class AEGroupUpdater(aedir.process.AEProcess):
         if not deref_attrs:
             return None
         ldap_result = self.ldap_conn.search_s(
-            self.ldap_conn.find_search_base(),
+            self.ldap_conn.search_base,
             ldap0.SCOPE_SUBTREE,
             '(&{0})'.format(''.join(person_filter_parts)),
             attrlist=['1.1'],
@@ -245,7 +245,7 @@ class AEGroupUpdater(aedir.process.AEProcess):
         2. remove all members from archived groups
         """
         non_empty_archived_groups = self.ldap_conn.search_s(
-            self.ldap_conn.find_search_base(),
+            self.ldap_conn.search_base,
             ldap0.SCOPE_SUBTREE,
             '(&(objectClass=aeGroup)(aeStatus=2)({0}=*))'.format(MEMBER_ATTR),
             attrlist=[
@@ -282,7 +282,7 @@ class AEGroupUpdater(aedir.process.AEProcess):
         3. Update all static aeGroup entries which contain attribute 'memberURL'
         """
         dynamic_groups = self.ldap_conn.search_s(
-            self.ldap_conn.find_search_base(),
+            self.ldap_conn.search_base,
             ldap0.SCOPE_SUBTREE,
             '({0}=*)'.format(MEMBERURL_ATTR),
             attrlist=[

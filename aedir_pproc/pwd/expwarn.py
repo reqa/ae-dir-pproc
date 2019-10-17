@@ -136,7 +136,7 @@ class AEDIRPwdJob(aedir.process.AEProcess):
         Search all pwdPolicy entries with expiring passwords (pwdMaxAge set)
         """
         ldap_pwdpolicy_results = self.ldap_conn.search_s(
-            self.ldap_conn.find_search_base(),
+            self.ldap_conn.search_base,
             ldap0.SCOPE_SUBTREE,
             filterstr=PWDPOLICY_FILTER,
             attrlist=[
@@ -178,7 +178,7 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                 pwd_expirywarn_filter
             )
             ldap_results = self.ldap_conn.search_s(
-                self.ldap_conn.find_search_base(),
+                self.ldap_conn.search_base,
                 ldap0.SCOPE_SUBTREE,
                 filterstr=pwd_expirywarn_filter,
                 attrlist=self.user_attrs,
