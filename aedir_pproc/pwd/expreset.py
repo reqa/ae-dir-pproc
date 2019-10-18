@@ -99,13 +99,10 @@ class AEDIRPwdJob(aedir.process.AEProcess):
         """
         Remove expired msPwdResetObject attributes
         """
-        expiration_filterstr = (
-            FILTERSTR_EXPIRE.format(currenttime=current_run_timestr)
-        ).encode('utf-8')
         ldap_results = self.ldap_conn.search_s(
             self.ldap_conn.search_base,
             ldap0.SCOPE_SUBTREE,
-            filterstr=expiration_filterstr,
+            filterstr=FILTERSTR_EXPIRE.format(currenttime=current_run_timestr),
             attrlist=[
                 'objectClass',
                 'msPwdResetExpirationTime',
@@ -113,47 +110,39 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                 'msPwdResetAdminPw',
             ],
         )
-        for ldap_dn, ldap_entry in ldap_results:
-            self.logger.debug('Found %r: %r', ldap_dn, ldap_entry)
+        for res in ldap_results:
+            self.logger.debug('Found %r: %r', res.dn_s, res.entry_as)
             # Prepare the modification list
             ldap_mod_list = [
                 # explictly delete by value
-                (
-                    ldap0.MOD_DELETE,
-                    'objectClass',
-                    ['msPwdResetObject']
-                ),
-                (
-                    ldap0.MOD_DELETE,
-                    'msPwdResetTimestamp',
-                    [ldap_entry['msPwdResetTimestamp'][0]]
-                ),
+                (ldap0.MOD_DELETE, b'objectClass', [b'msPwdResetObject']),
+                (ldap0.MOD_DELETE, 'msPwdResetTimestamp', [res.entry_as['msPwdResetTimestamp'][0]]),
                 (
                     ldap0.MOD_DELETE,
                     'msPwdResetExpirationTime',
-                    [ldap_entry['msPwdResetExpirationTime'][0]]
+                    [res.entry_as['msPwdResetExpirationTime'][0]]
                 ),
                 # delete whole value no matter what
-                (ldap0.MOD_DELETE, 'msPwdResetEnabled', None),
-                (ldap0.MOD_DELETE, 'msPwdResetPasswordHash', None),
+                (ldap0.MOD_DELETE, b'msPwdResetEnabled', None),
+                (ldap0.MOD_DELETE, b'msPwdResetPasswordHash', None),
             ]
-            if PWD_ADMIN_LEN or 'msPwdResetAdminPw' in ldap_entry:
+            if PWD_ADMIN_LEN or 'msPwdResetAdminPw' in res.entry_as:
                 ldap_mod_list.append(
-                    (ldap0.MOD_DELETE, 'msPwdResetAdminPw', None),
+                    (ldap0.MOD_DELETE, b'msPwdResetAdminPw', None),
                 )
             # Actually perform the modify operation
             try:
-                self.ldap_conn.modify_s(ldap_dn, ldap_mod_list)
+                self.ldap_conn.modify_s(res.dn_s, ldap_mod_list)
             except ldap0.LDAPError as ldap_error:
                 self.logger.warn(
                     'LDAPError removing msPwdResetObject attrs in %r: %s',
-                    ldap_dn,
+                    res.dn_s,
                     ldap_error
                 )
             else:
                 self.logger.info(
                     'Removed msPwdResetObject attributes from %r',
-                    ldap_dn,
+                    res.dn_s,
                 )
             return # end of expire_pwd_reset()
 

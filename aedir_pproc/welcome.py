@@ -106,7 +106,7 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                 lasttime=last_run_timestr,
                 serverid=self.server_id,
             )
-        ).encode('utf-8')
+        )
         ldap_results = self.ldap_conn.search_s(
             self.ldap_conn.search_base,
             ldap0.SCOPE_SUBTREE,
@@ -180,7 +180,7 @@ class AEDIRPwdJob(aedir.process.AEProcess):
         try:
             smtp_conn.send_simple_message(
                 SMTP_FROM,
-                [to_addr.encode('utf-8')],
+                [to_addr],
                 'utf-8',
                 (
                     ('From', SMTP_FROM),
@@ -215,7 +215,7 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                 lasttime=last_run_timestr,
                 serverid=self.server_id,
             )
-        ).encode('utf-8')
+        )
         self.logger.debug(
             'User search filter: %r',
             nopassword_filterstr,
@@ -241,7 +241,7 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                 NOTIFY_EMAIL_TEMPLATE, 'rb'
             ).read().decode('utf-8')
             msg_attrs = {
-                'ldap_uri':str(self.ldap_conn.ldap_url_obj.initializeUrl()),
+                'ldap_uri':str(self.ldap_conn.ldap_url_obj.connect_uri()),
                 'user_uid':ldap_entry['uid'][0].decode('utf-8'),
                 'user_cn':ldap_entry.get('cn', [''])[0].decode('utf-8'),
                 'user_displayname':ldap_entry.get(
@@ -264,7 +264,7 @@ class AEDIRPwdJob(aedir.process.AEProcess):
             try:
                 admin_entry = self.ldap_conn.read_s(
                     admin_dn,
-                    filterstr=FILTERSTR_USER.encode('utf-8'),
+                    filterstr=FILTERSTR_USER,
                     attrlist=self.admin_attrs,
                 ) or {}
             except (ldap0.NO_SUCH_OBJECT, ldap0.INSUFFICIENT_ACCESS) as ldap_err:
