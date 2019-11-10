@@ -217,6 +217,7 @@ def add_http_headers():
     Add more HTTP headers to response
     """
     csp_value = ' '.join((
+        "base-uri 'none';",
         "child-src 'none';",
         "connect-src 'none';",
         "default-src 'none';",
@@ -225,6 +226,8 @@ def add_http_headers():
         "frame-ancestors 'none';",
         "frame-src 'none';",
         "img-src 'self' data:;",
+        "media-src 'none';",
+        "object-src 'none';",
         "script-src 'none';",
         "style-src 'self';",
     ))
