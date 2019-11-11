@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 aedir_pproc.persattrs - Sync the personnel attributes (cn, sn, givenName, mail)

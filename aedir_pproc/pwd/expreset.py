@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 aedir_pproc.pwd.expreset - Remove expired msPwdResetObject attributes

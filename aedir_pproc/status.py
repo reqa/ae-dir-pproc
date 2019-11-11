@@ -1,4 +1,3 @@
-#!/opt/ae-dir/bin/python
 # -*- coding: utf-8 -*-
 """
 aedir_pproc.status - updates aeStatus of expired AE-DIR entries (aeObject)

@@ -1,4 +1,3 @@
-#!/opt/ae-dir/bin/python
 # -*- coding: utf-8 -*-
 """
 aedir_pproc.groups - Performs two tasks:
