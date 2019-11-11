@@ -13,6 +13,7 @@ from __future__ import absolute_import
 
 # from ldap0 package
 import ldap0
+import ldap0.base
 import ldap0.filter
 from ldap0.filter import compose_filter, map_filter_parts
 from ldap0.controls.deref import DereferenceControl
@@ -104,7 +105,13 @@ class AEGroupUpdater(aedir.process.AEProcess):
 
         if mod_list:
             try:
-                self.ldap_conn.modify_s(group_dn, mod_list)
+                self.ldap_conn.modify_s(
+                    group_dn,
+                    [
+                        (mod, at.encode('ascii'), ldap0.base.encode_list(avl))
+                        for mod, at, avl in mod_list
+                    ],
+                )
             except ldap0.LDAPError as ldap_error:
                 self.logger.error(
                     u'LDAPError modifying %r: %s mod_list = %r',
