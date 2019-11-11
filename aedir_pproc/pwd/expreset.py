@@ -116,10 +116,10 @@ class AEDIRPwdJob(aedir.process.AEProcess):
             ldap_mod_list = [
                 # explictly delete by value
                 (ldap0.MOD_DELETE, b'objectClass', [b'msPwdResetObject']),
-                (ldap0.MOD_DELETE, 'msPwdResetTimestamp', [res.entry_as['msPwdResetTimestamp'][0]]),
+                (ldap0.MOD_DELETE, b'msPwdResetTimestamp', [res.entry_as['msPwdResetTimestamp'][0]]),
                 (
                     ldap0.MOD_DELETE,
-                    'msPwdResetExpirationTime',
+                    b'msPwdResetExpirationTime',
                     [res.entry_as['msPwdResetExpirationTime'][0]]
                 ),
                 # delete whole value no matter what
