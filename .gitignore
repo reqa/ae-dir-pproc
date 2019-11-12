@@ -8,3 +8,5 @@ build/*
 docs/.build
 slapdtest-*
 .mypy_cache
+deb_dist/*
+*.tar.gz

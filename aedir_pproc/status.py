@@ -1,4 +1,3 @@
-#!/opt/ae-dir/bin/python
 # -*- coding: utf-8 -*-
 """
 aedir_pproc.status - updates aeStatus of expired AE-DIR entries (aeObject)
@@ -64,7 +63,7 @@ class AEStatusUpdater(aedir.process.AEProcess):
         self.logger.debug('expiry_filter = %r', expiry_filter)
         try:
             msg_id = self.ldap_conn.search(
-                self.ldap_conn.find_search_base(),
+                self.ldap_conn.search_base,
                 ldap0.SCOPE_SUBTREE,
                 expiry_filter,
                 attrlist=['aeStatus', 'aeExpiryStatus'],
@@ -73,19 +72,19 @@ class AEStatusUpdater(aedir.process.AEProcess):
             self.logger.warn('LDAPError searching %r: %s', expiry_filter, ldap_error)
             return
         # process LDAP results
-        for _, res_data, _, _ in self.ldap_conn.results(msg_id):
-            for aeobj_dn, aeobj_entry in res_data:
+        for ldap_res in self.ldap_conn.results(msg_id):
+            for aeobj in ldap_res.rdata:
                 self.aeobject_counter += 1
                 modlist = [
-                    (ldap0.MOD_DELETE, 'aeStatus', aeobj_entry['aeStatus']),
-                    (ldap0.MOD_ADD, 'aeStatus', aeobj_entry['aeExpiryStatus']),
+                    (ldap0.MOD_DELETE, b'aeStatus', aeobj.entry_as['aeStatus']),
+                    (ldap0.MOD_ADD, b'aeStatus', aeobj.entry_as['aeExpiryStatus']),
                 ]
                 try:
                     self.ldap_conn.modify_s(
-                        aeobj_dn,
+                        aeobj.dn_s,
                         [
-                            (ldap0.MOD_DELETE, 'aeStatus', aeobj_entry['aeStatus']),
-                            (ldap0.MOD_ADD, 'aeStatus', aeobj_entry['aeExpiryStatus']),
+                            (ldap0.MOD_DELETE, b'aeStatus', aeobj.entry_as['aeStatus']),
+                            (ldap0.MOD_ADD, b'aeStatus', aeobj.entry_as['aeExpiryStatus']),
                         ]
                     )
                 except ldap0.LDAPError as ldap_error:

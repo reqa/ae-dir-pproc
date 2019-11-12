@@ -1,4 +1,3 @@
-#!/opt/ae-dir/bin/python
 # -*- coding: utf-8 -*-
 """
 aedir_pproc.groups - Performs two tasks:
@@ -12,11 +11,11 @@ from __future__ import absolute_import
 # Imports
 #-----------------------------------------------------------------------
 
-import os
-
 # from ldap0 package
 import ldap0
-from ldap0.filter import escape_filter_chars, compose_filter, map_filter_parts
+import ldap0.base
+import ldap0.filter
+from ldap0.filter import compose_filter, map_filter_parts
 from ldap0.controls.deref import DereferenceControl
 import ldap0.ldapurl
 import aedir
@@ -106,7 +105,13 @@ class AEGroupUpdater(aedir.process.AEProcess):
 
         if mod_list:
             try:
-                self.ldap_conn.modify_s(group_dn, mod_list)
+                self.ldap_conn.modify_s(
+                    group_dn,
+                    [
+                        (mod, at.encode('ascii'), ldap0.base.encode_list(avl))
+                        for mod, at, avl in mod_list
+                    ],
+                )
             except ldap0.LDAPError as ldap_error:
                 self.logger.error(
                     u'LDAPError modifying %r: %s mod_list = %r',
@@ -147,7 +152,7 @@ class AEGroupUpdater(aedir.process.AEProcess):
         for group_object_class, member_attrs in MEMBER_ATTRS_MAP.items():
             member_map_attr, member_user_attr = member_attrs
             msg_id = self.ldap_conn.search(
-                self.ldap_conn.find_search_base(),
+                self.ldap_conn.search_base,
                 ldap0.SCOPE_SUBTREE,
                 '(&(objectClass={0})(!({1}=*))(aeStatus=0))'.format(
                     group_object_class,
@@ -157,7 +162,7 @@ class AEGroupUpdater(aedir.process.AEProcess):
                     MEMBER_ATTR,
                     member_map_attr,
                 ],
-                serverctrls=[
+                req_ctrls=[
                     DereferenceControl(
                         True,
                         {
@@ -171,34 +176,34 @@ class AEGroupUpdater(aedir.process.AEProcess):
                 ],
             )
 
-            for _, ldap_results, _, _ in self.ldap_conn.results(msg_id, add_ctrls=1):
+            for ldap_results in self.ldap_conn.results(msg_id):
 
-                for ldap_group_dn, ldap_group_entry, ldap_resp_controls in ldap_results:
+                for ldap_group in ldap_results.rdata:
 
-                    if not ldap_resp_controls:
+                    if not ldap_group.ctrls:
                         continue
 
-                    member_deref_result = ldap_resp_controls[0].derefRes[MEMBER_ATTR]
+                    member_deref_result = ldap_group.ctrls[0].derefRes[MEMBER_ATTR]
 
-                    old_members = set(ldap_group_entry.get(MEMBER_ATTR, []))
-                    old_member_attr_values = set(ldap_group_entry.get(member_map_attr, []))
+                    old_members = set(ldap_group.entry_s.get(MEMBER_ATTR, []))
+                    old_member_attr_values = set(ldap_group.entry_s.get(member_map_attr, []))
                     new_members = set()
                     new_member_attr_values = set()
-                    for deref_dn, deref_entry in member_deref_result:
-                        if int(deref_entry['aeStatus'][0]) <= 0:
-                            new_members.add(deref_dn)
+                    for deref_res in member_deref_result:
+                        if int(deref_res.entry_s['aeStatus'][0]) <= 0:
+                            new_members.add(deref_res.dn_s)
                             try:
-                                new_member_attr_values.add(deref_entry[member_user_attr][0])
+                                new_member_attr_values.add(deref_res.entry_s[member_user_attr][0])
                             except KeyError:
                                 self.logger.error(
                                     'Attribute %r not found in entry %r: %r',
                                     member_user_attr,
-                                    deref_dn,
-                                    deref_entry,
+                                    deref_res.dn_s,
+                                    deref_res.entry_s,
                                 )
 
                     self._update_members(
-                        ldap_group_dn,
+                        ldap_group.dn_s,
                         member_map_attr,
                         old_members,
                         new_members,
@@ -230,14 +235,14 @@ class AEGroupUpdater(aedir.process.AEProcess):
         if not deref_attrs:
             return None
         ldap_result = self.ldap_conn.search_s(
-            self.ldap_conn.find_search_base(),
+            self.ldap_conn.search_base,
             ldap0.SCOPE_SUBTREE,
             '(&{0})'.format(''.join(person_filter_parts)),
             attrlist=['1.1'],
         ) or []
         res = set([
-            dn.lower()
-            for dn, _ in ldap_result
+            res.dn_s.lower()
+            for res in ldap_result
         ])
         return res # end of _constrained_persons()
 
@@ -246,7 +251,7 @@ class AEGroupUpdater(aedir.process.AEProcess):
         2. remove all members from archived groups
         """
         non_empty_archived_groups = self.ldap_conn.search_s(
-            self.ldap_conn.find_search_base(),
+            self.ldap_conn.search_base,
             ldap0.SCOPE_SUBTREE,
             '(&(objectClass=aeGroup)(aeStatus=2)({0}=*))'.format(MEMBER_ATTR),
             attrlist=[
@@ -283,7 +288,7 @@ class AEGroupUpdater(aedir.process.AEProcess):
         3. Update all static aeGroup entries which contain attribute 'memberURL'
         """
         dynamic_groups = self.ldap_conn.search_s(
-            self.ldap_conn.find_search_base(),
+            self.ldap_conn.search_base,
             ldap0.SCOPE_SUBTREE,
             '({0}=*)'.format(MEMBERURL_ATTR),
             attrlist=[
@@ -295,23 +300,23 @@ class AEGroupUpdater(aedir.process.AEProcess):
                 MEMBERURL_ATTR,
             ]+MEMBER_ATTRS,
         )
-        for dyn_group_dn, dyn_group_entry in dynamic_groups:
+        for dyn_group in dynamic_groups:
 
-            self.logger.debug('Processing group entry %r ...', dyn_group_dn)
+            self.logger.debug('Processing group entry %r ...', dyn_group.dn_s)
 
-            group_object_class = dyn_group_entry['structuralObjectClass'][0]
+            group_object_class = dyn_group.entry_s['structuralObjectClass'][0]
             member_map_attr, member_user_attr = MEMBER_ATTRS_MAP[group_object_class]
             self.logger.debug(
                 'group_object_class=%r member_map_attr=%r member_user_attr=%r',
                 group_object_class, member_map_attr, member_user_attr
             )
 
-            old_members = set(dyn_group_entry.get(MEMBER_ATTR, []))
-            old_member_attr_values = set(dyn_group_entry.get(member_map_attr, []))
+            old_members = set(dyn_group.entry_s.get(MEMBER_ATTR, []))
+            old_member_attr_values = set(dyn_group.entry_s.get(member_map_attr, []))
             new_members = set()
             new_member_attr_values = set()
 
-            person_dn_set = self._constrained_persons(dyn_group_entry)
+            person_dn_set = self._constrained_persons(dyn_group.entry_s)
             self.logger.debug('person_dn_set = %r', person_dn_set)
             if person_dn_set is None:
                 person_filter_part = ''
@@ -319,14 +324,14 @@ class AEGroupUpdater(aedir.process.AEProcess):
                 person_filter_part = '(&(objectClass=aeUser)(aePerson=*))'
             self.logger.debug('person_filter_part = %r', person_filter_part)
 
-            for member_url in dyn_group_entry[MEMBERURL_ATTR]:
+            for member_url in dyn_group.entry_s[MEMBERURL_ATTR]:
 
                 self.logger.debug('member_url = %r', member_url)
                 member_url_obj = ldap0.ldapurl.LDAPUrl(member_url)
                 dyn_group_filter = '(&{0}(!(entryDN={1})){2}{3})'.format(
                     member_url_obj.filterstr,
-                    dyn_group_dn,
-                    self._member_zones_filter(dyn_group_entry),
+                    dyn_group.dn_s,
+                    self._member_zones_filter(dyn_group.entry_s),
                     person_filter_part,
                 )
                 self.logger.debug('dyn_group_filter = %r', dyn_group_filter)
@@ -355,42 +360,44 @@ class AEGroupUpdater(aedir.process.AEProcess):
                             'aeStatus',
                             'aePerson',
                         ]+(member_url_obj.attrs or [])+USER_ATTRS,
-                        serverctrls=server_ctrls,
+                        req_ctrls=server_ctrls,
                     )
-                    for _, ldap_results, _, _ in self.ldap_conn.results(msg_id, add_ctrls=1):
-                        for groupmember_dn, groupmember_entry, ldap_resp_controls in ldap_results:
-                            if person_dn_set is not None and \
-                               groupmember_entry['aePerson'][0].lower() not in person_dn_set:
+                    for ldap_results in self.ldap_conn.results(msg_id):
+                        for group in ldap_results.rdata:
+                            if (
+                                    person_dn_set is not None and
+                                    group.entry_s['aePerson'][0].lower() not in person_dn_set
+                                ):
                                 continue
                             if not member_url_obj.attrs or \
                                member_url_obj.attrs[0].lower() == 'entrydn':
-                                member_deref_result = [(groupmember_dn, groupmember_entry)]
-                            elif member_url_obj.attrs and not ldap_resp_controls:
+                                member_deref_results = [group]
+                            elif member_url_obj.attrs and not group.ctrls:
                                 self.logger.debug(
                                     'ignoring empty %r: %r',
-                                    groupmember_dn,
-                                    groupmember_entry
+                                    group.dn_s,
+                                    group.entry_s
                                 )
                                 continue
                             else:
-                                member_deref_result = ldap_resp_controls[0].derefRes[MEMBER_ATTR]
-                            for deref_dn, deref_entry in member_deref_result:
-                                if int(deref_entry['aeStatus'][0]) <= 0:
-                                    new_members.add(deref_dn)
+                                member_deref_results = group.ctrls[0].derefRes[MEMBER_ATTR]
+                            for deref_res in member_deref_results:
+                                if int(deref_res.entry_s['aeStatus'][0]) <= 0:
+                                    new_members.add(deref_res.dn_s)
                                     try:
-                                        new_member_attr_values.add(deref_entry[member_user_attr][0])
+                                        new_member_attr_values.add(deref_res.entry_s[member_user_attr][0])
                                     except KeyError:
                                         self.logger.error(
                                             'Attribute %r not found in entry %r: %r',
                                             member_user_attr,
-                                            deref_dn,
-                                            deref_entry,
+                                            deref_res.dn_s,
+                                            deref_res.entry_s,
                                         )
 
                 except ldap0.LDAPError as ldap_error:
                     self.logger.error(
                         u'LDAPError searching members for %r with %r and %r: %s',
-                        dyn_group_dn,
+                        dyn_group.dn_s,
                         member_url,
                         dyn_group_filter,
                         ldap_error,
@@ -398,7 +405,7 @@ class AEGroupUpdater(aedir.process.AEProcess):
                     continue
 
             self._update_members(
-                dyn_group_dn,
+                dyn_group.dn_s,
                 member_map_attr,
                 old_members,
                 new_members,

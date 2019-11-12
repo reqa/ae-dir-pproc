@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 aedir_pproc.persattrs - Sync the personnel attributes (cn, sn, givenName, mail)
@@ -13,16 +12,14 @@ from __future__ import absolute_import
 
 # Modules from Python's standard library
 import sys
-import os
 import time
-import logging
-from logging.handlers import SysLogHandler
 
 # from ldap0 package
 import ldap0
 import ldap0.modlist
 import ldap0.functions
-from ldap0.filter import time_span_filter
+import ldap0.filter
+from ldap0.base import encode_list
 
 import aedir
 import aedir.process
@@ -104,82 +101,86 @@ class SyncProcess(aedir.process.TimestampStateMixin, aedir.process.AEProcess):
 
         self.logger.debug(
             'Searching in %r with filter %r',
-            self.ldap_conn.find_search_base(),
+            self.ldap_conn.search_base,
             aeperson_filterstr,
         )
         msg_id = self.ldap_conn.search(
-            self.ldap_conn.find_search_base(),
+            self.ldap_conn.search_base,
             ldap0.SCOPE_SUBTREE,
             aeperson_filterstr,
             attrlist=AEDIR_AEPERSON_ATTRS,
         )
 
-        for _, res_data, _, _ in self.ldap_conn.results(msg_id):
+        for ldap_res in self.ldap_conn.results(msg_id):
 
-            for aeperson_dn, aeperson_entry in res_data:
+            for aeperson in ldap_res.rdata:
 
                 self.aeperson_counter += 1
 
-                aeuser_result = self.ldap_conn.search_s(
-                    self.ldap_conn.find_search_base(),
+                aeuser_results = self.ldap_conn.search_s(
+                    self.ldap_conn.search_base,
                     ldap0.SCOPE_SUBTREE,
-                    '(&(objectClass=aeUser)(aePerson=%s))' % (aeperson_dn),
+                    '(&(objectClass=aeUser)(aePerson=%s))' % (ldap0.filter.escape_str(aeperson.dn_s)),
                     attrlist=AEDIR_AEPERSON_ATTRS+['uid', 'uidNumber', 'displayName'],
                 )
 
                 # Process the aeUser entries
-                for aeuser_dn, aeuser_entry in aeuser_result:
+                for aeuser in aeuser_results:
 
                     new_aeuser_entry = {}
-                    new_aeuser_entry.update(aeperson_entry)
+                    new_aeuser_entry.update(aeperson.entry_s)
                     del new_aeuser_entry['aeStatus']
                     new_aeuser_entry['displayName'] = ['{cn} ({uid}/{uidNumber})'.format(
-                        cn=aeperson_entry['cn'][0],
-                        uid=aeuser_entry['uid'][0],
-                        uidNumber=aeuser_entry['uidNumber'][0],
+                        cn=aeperson.entry_s['cn'][0],
+                        uid=aeuser.entry_s['uid'][0],
+                        uidNumber=aeuser.entry_s['uidNumber'][0],
                     )]
 
                     # Check whether aeStatus must be updated
                     # First preserve old status
-                    aeperson_status = int(aeperson_entry['aeStatus'][0])
-                    aeuser_status = int(aeuser_entry['aeStatus'][0])
+                    aeperson_status = int(aeperson.entry_s['aeStatus'][0])
+                    aeuser_status = int(aeuser.entry_s['aeStatus'][0])
                     if aeperson_status > 0 and aeuser_status <= 0:
                         new_aeuser_entry['aeStatus'] = '1'
                         self.deactivate_counter += 1
                     else:
-                        new_aeuser_entry['aeStatus'] = aeuser_entry['aeStatus']
+                        new_aeuser_entry['aeStatus'] = aeuser.entry_s['aeStatus']
 
                     # Generate diff of general person attributes
                     modlist = ldap0.modlist.modify_modlist(
-                        aeuser_entry,
-                        new_aeuser_entry,
+                        aeuser.entry_as,
+                        {
+                            at: encode_list(avs)
+                            for at, avs in new_aeuser_entry.items()
+                        },
                         ignore_attr_types=['uid', 'uidNumber']
                     )
 
                     if not modlist:
                         self.logger.debug(
                             'Nothing to do in %r => skipped',
-                            aeuser_dn,
+                            aeuser.dn_s,
                         )
                     else:
                         self.logger.debug(
                             'Update existing entry %r: %r',
-                            aeuser_dn,
+                            aeuser.dn_s,
                             modlist,
                         )
                         try:
-                            self.ldap_conn.modify_s(aeuser_dn, modlist)
+                            self.ldap_conn.modify_s(aeuser.dn_s, modlist)
                         except ldap0.LDAPError as ldap_err:
                             self.logger.error(
-                                'LDAP error modifying %r: %s',
-                                aeuser_dn,
+                                'LDAP error modifying %r with %r: %s',
+                                aeuser.dn_s,
+                                modlist,
                                 ldap_err,
                             )
                             self.error_counter += 1
                         else:
                             self.logger.info(
                                 'Updated entry %r: %r',
-                                aeuser_dn,
+                                aeuser.dn_s,
                                 modlist,
                             )
                             self.modify_counter += 1
