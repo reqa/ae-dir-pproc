@@ -99,12 +99,6 @@ class AEDIRPwdJob(aedir.process.AEProcess):
         'creatorsName',
         'modifiersName',
     ]
-    admin_attrs = [
-        'objectClass',
-        'uid',
-        'cn',
-        'mail'
-    ]
 
     def __init__(self):
         aedir.process.AEProcess.__init__(self)
@@ -202,38 +196,6 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                     'web_ctx_host': (WEB_CTX_HOST).decode('ascii'),
                     'app_path_prefix': APP_PATH_PREFIX,
                 }
-                user_data['admin_cn'] = u'unknown'
-                user_data['admin_mail'] = u'unknown'
-                for admin_dn_attr in ('modifiersName', 'creatorsName'):
-                    try:
-                        admin = self.ldap_conn.search_s(
-                            res.entry_s[admin_dn_attr][0],
-                            ldap0.SCOPE_BASE,
-                            filterstr=FILTERSTR_USER,
-                            attrlist=self.admin_attrs,
-                        )[0]
-                    except ldap0.LDAPError as ldap_err:
-                        self.logger.debug(
-                            'LDAPError reading %r: %r: %s',
-                            admin_dn_attr,
-                            res.entry_s[admin_dn_attr][0],
-                            ldap_err,
-                        )
-                    except IndexError:
-                        self.logger.debug(
-                            'No real admin referenced in %r: %r',
-                            admin_dn_attr,
-                            res.entry_s[admin_dn_attr][0],
-                        )
-                    else:
-                        user_data['admin_cn'] = admin.entry_s.get('cn', [''])[0]
-                        user_data['admin_mail'] = admin.entry_s.get('mail', [''])[0]
-                        self.logger.debug(
-                            'Admin displayName read from %r: %r',
-                            admin_dn_attr,
-                            user_data['admin_cn'],
-                        )
-                        break
                 pwd_expire_warning_list.append(user_data)
 
         self.logger.debug('pwd_expire_warning_list = %s', pwd_expire_warning_list)
