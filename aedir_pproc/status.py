@@ -88,10 +88,10 @@ class AEStatusUpdater(aedir.process.AEProcess):
                         ]
                     )
                 except ldap0.LDAPError as ldap_error:
-                    self.logger.warn('LDAPError modifying %r: %s', aeobj_dn, ldap_error)
+                    self.logger.warn('LDAPError modifying %r: %s', aeobj.dn_s, ldap_error)
                     self.error_counter += 1
                 else:
-                    self.logger.info('Updated aeStatus in %r: %s', aeobj_dn, modlist)
+                    self.logger.info('Updated aeStatus in %r: %s', aeobj.dn_s, modlist)
                     self.modify_counter += 1
         return # end of run_worker()
 
