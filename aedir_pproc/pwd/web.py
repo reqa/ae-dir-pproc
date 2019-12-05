@@ -49,7 +49,7 @@ from aedirpwd_cnf import \
     FILTERSTR_CHANGEPW, FILTERSTR_REQUESTPW, FILTERSTR_RESETPW, \
     PWD_ADMIN_LEN, PWD_ADMIN_MAILTO, PWD_EXPIRETIMESPAN, PWD_LENGTH, \
     PWD_RESET_ENABLED, PWD_TMP_CHARS, PWD_TMP_HASH_ALGO, \
-    SMTP_DEBUGLEVEL, SMTP_FROM, SMTP_LOCALHOSTNAME, SMTP_TLSARGS, SMTP_URL
+    SMTP_DEBUGLEVEL, SMTP_FROM, SMTP_LOCALHOSTNAME, SMTP_TLS_CACERTS, SMTP_URL
 
 USER_ATTRS = [
     'objectClass',
@@ -647,8 +647,8 @@ class RequestPasswordReset(BaseApp):
         smtp_conn = mailutil.smtp_connection(
             SMTP_URL,
             local_hostname=SMTP_LOCALHOSTNAME,
-            tls_args=SMTP_TLSARGS,
-            debug_level=SMTP_DEBUGLEVEL
+            ca_certs=SMTP_TLS_CACERTS,
+            debug_level=SMTP_DEBUGLEVEL,
         )
         to_addr = user_entry['mail'][0]
         default_headers = (

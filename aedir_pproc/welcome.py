@@ -45,7 +45,7 @@ from aedirpwd_cnf import \
     SMTP_DEBUGLEVEL, \
     SMTP_FROM, \
     SMTP_LOCALHOSTNAME, \
-    SMTP_TLSARGS, \
+    SMTP_TLS_CACERTS, \
     SMTP_URL, \
     WEB_CTX_HOST
 
@@ -170,8 +170,8 @@ class AEDIRPwdJob(aedir.process.AEProcess):
         smtp_conn = self._smtp_connection(
             SMTP_URL,
             local_hostname=SMTP_LOCALHOSTNAME,
-            tls_args=SMTP_TLSARGS,
-            debug_level=SMTP_DEBUGLEVEL
+            ca_certs=SMTP_TLS_CACERTS,
+            debug_level=SMTP_DEBUGLEVEL,
         )
         smtp_message = smtp_message_tmpl.format(**msg_attrs)
         smtp_subject = NOTIFY_EMAIL_SUBJECT.format(**msg_attrs)
@@ -260,7 +260,7 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                     admin_dn,
                     filterstr=FILTERSTR_USER,
                     attrlist=self.admin_attrs,
-                ) or {}
+                )
             except (ldap0.NO_SUCH_OBJECT, ldap0.INSUFFICIENT_ACCESS) as ldap_err:
                 self.logger.warning(
                     'Error reading admin entry %r referenced by %r: %s',
@@ -276,8 +276,15 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                         admin_dn,
                         ldap_res.dn_s,
                     )
-            msg_attrs['admin_cn'] = admin_res.entry_s.get('cn', ['unknown'])[0]
-            msg_attrs['admin_mail'] = admin_res.entry_s.get('mail', ['unknown'])[0]
+                else:
+                    self.logger.debug(
+                        'Read admin entry %r: %r',
+                        admin_dn,
+                        admin_res.entry_s,
+                    )
+                    if admin_res is not None:
+                        msg_attrs['admin_cn'] = admin_res.entry_s.get('cn', ['unknown'])[0]
+                        msg_attrs['admin_mail'] = admin_res.entry_s.get('mail', ['unknown'])[0]
             self._send_welcome_message(to_addr, smtp_message_tmpl, msg_attrs)
             if NOTIFY_SUCCESSFUL_MOD:
                 self.ldap_conn.modify_s(ldap_res.dn_s, NOTIFY_SUCCESSFUL_MOD)

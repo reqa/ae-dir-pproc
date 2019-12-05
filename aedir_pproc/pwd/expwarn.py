@@ -67,7 +67,7 @@ from aedirpwd_cnf import \
     SMTP_DEBUGLEVEL, \
     SMTP_FROM, \
     SMTP_LOCALHOSTNAME, \
-    SMTP_TLSARGS, \
+    SMTP_TLS_CACERTS, \
     SMTP_URL, \
     TEMPLATES_DIRNAME, \
     USER_MAIL_ENABLED, \
@@ -214,8 +214,8 @@ class AEDIRPwdJob(aedir.process.AEProcess):
             smtp_conn = self._smtp_connection(
                 SMTP_URL,
                 local_hostname=SMTP_LOCALHOSTNAME,
-                tls_args=SMTP_TLSARGS,
-                debug_level=SMTP_DEBUGLEVEL
+                ca_certs=SMTP_TLS_CACERTS,
+                debug_level=SMTP_DEBUGLEVEL,
             )
             notification_counter = 0
             for user_data in pwd_expire_warning_list:
