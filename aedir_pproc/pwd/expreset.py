@@ -44,7 +44,6 @@ from aedirpwd_cnf import \
     SMTP_DEBUGLEVEL, \
     SMTP_FROM, \
     SMTP_LOCALHOSTNAME, \
-    SMTP_TLSARGS, \
     SMTP_URL, \
     WEB_CTX_HOST
 
