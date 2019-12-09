@@ -78,7 +78,6 @@ class AEDIRWelcomeMailJob(aedir.process.AEProcess):
         aedir.process.AEProcess.__init__(self)
         self.host_fqdn = getfqdn()
         self.server_id = server_id
-        self.notification_counter = 0
         self._smtp_conn = None
         self.logger.debug('running on %r with (serverID %r)', self.host_fqdn, self.server_id)
 
@@ -130,12 +129,11 @@ class AEDIRWelcomeMailJob(aedir.process.AEProcess):
             )
         else:
             self.logger.info(
-                'Sent notification for user %r with e-mail address %r',
+                'Sent welcome notification for user %r with e-mail address %r',
                 msg_attrs['user_displayname'],
                 to_addr,
             )
-            self.notification_counter += 1
-        return # end of _send_welcome_message()
+        # end of _send_welcome_message()
 
     def _welcome_notifications(self, last_run_timestr, current_run_timestr):
         """
@@ -162,10 +160,12 @@ class AEDIRWelcomeMailJob(aedir.process.AEProcess):
             self.logger.debug('No results => no notifications')
             return
 
+        notification_counter = 0
+
         for ldap_res in ldap_results:
             to_addr = ldap_res.entry_s['mail'][0]
             self.logger.debug(
-                'Prepare notification for %r sent to %r',
+                'Prepare welcome notification for %r sent to %r',
                 ldap_res.dn_s,
                 to_addr,
             )
@@ -218,11 +218,12 @@ class AEDIRWelcomeMailJob(aedir.process.AEProcess):
                         msg_attrs['admin_cn'] = admin_res.entry_s.get('cn', ['unknown'])[0]
                         msg_attrs['admin_mail'] = admin_res.entry_s.get('mail', ['unknown'])[0]
             self._send_welcome_message(to_addr, smtp_message_tmpl, msg_attrs)
+            notification_counter += 1
             if NOTIFY_SUCCESSFUL_MOD:
                 self.ldap_conn.modify_s(ldap_res.dn_s, NOTIFY_SUCCESSFUL_MOD)
 
-        if self.notification_counter:
-            self.logger.info('Sent %d notifications', self.notification_counter)
+        if notification_counter:
+            self.logger.info('Sent %d welcome notifications', notification_counter)
 
         return # endof welcome_notifications()
 
