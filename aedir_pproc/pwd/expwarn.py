@@ -185,7 +185,7 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                     ('From', SMTP_FROM),
                     ('Date', email.utils.formatdate(time.time(), True)),
                 )
-                user_data = {
+                pwd_expire_warning_list.append({
                     'user_uid': res.entry_s['uid'][0],
                     'user_cn': res.entry_s.get('cn', [''])[0],
                     'user_displayname': res.entry_s.get('displayName', [''])[0],
@@ -195,17 +195,17 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                     'user_dn': res.dn_s,
                     'web_ctx_host': (WEB_CTX_HOST).decode('ascii'),
                     'app_path_prefix': APP_PATH_PREFIX,
-                }
-                pwd_expire_warning_list.append(user_data)
+                })
 
         self.logger.debug('pwd_expire_warning_list = %s', pwd_expire_warning_list)
 
         if not pwd_expire_warning_list:
-            self.logger.info('No results => no notifications')
+            self.logger.info('No results => no password expiry notifications')
         elif USER_MAIL_ENABLED is not True:
             self.logger.info(
-                'Sending e-mails is disabled => supressed %d notifications',
+                'Sending e-mails is disabled => Supressed %d password expiry notifications to %s',
                 len(pwd_expire_warning_list),
+                ', '.join([user_data['user_uid'] for user_data in pwd_expire_warning_list]),
             )
         else:
             # Read mail template file
@@ -217,7 +217,7 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                 ca_certs=SMTP_TLS_CACERTS,
                 debug_level=SMTP_DEBUGLEVEL,
             )
-            notification_counter = 0
+            notified_users = []
             for user_data in pwd_expire_warning_list:
                 to_addr = user_data['emailaddr']
                 smtp_message = smtp_message_tmpl.format(**user_data)
@@ -239,8 +239,12 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                     self.logger.error('Recipient %r rejected: %s', to_addr, smtp_err)
                     continue
                 else:
-                    notification_counter += 1
-            self.logger.info('Sent %d notifications', notification_counter)
+                    notified_users.append(user_data['user_uid'])
+            self.logger.info(
+                'Sent %d password expiry notifications: %s',
+                len(notified_users),
+                ', '.join(notified_users),
+            )
 
 
 def main():
