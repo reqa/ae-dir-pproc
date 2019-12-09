@@ -129,7 +129,7 @@ class AEDIRWelcomeMailJob(aedir.process.AEProcess):
             )
         else:
             self.logger.info(
-                'Sent welcome notification for user %r with e-mail address %r',
+                'Sent welcome notification for user %r to %r',
                 msg_attrs['user_displayname'],
                 to_addr,
             )
