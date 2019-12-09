@@ -180,11 +180,7 @@ class AEDIRPwdJob(aedir.process.AEProcess):
 
             for res in ldap_results:
                 to_addr = res.entry_s['mail'][0]
-                self.logger.debug('Prepare notification for %r sent to %r', res.dn_s, to_addr)
-                default_headers = (
-                    ('From', SMTP_FROM),
-                    ('Date', email.utils.formatdate(time.time(), True)),
-                )
+                self.logger.debug('Prepare password expiry notification for %r sent to %r', res.dn_s, to_addr)
                 pwd_expire_warning_list.append({
                     'user_uid': res.entry_s['uid'][0],
                     'user_cn': res.entry_s.get('cn', [''])[0],
@@ -193,7 +189,7 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                     'emailaddr': to_addr,
                     'fromaddr': SMTP_FROM,
                     'user_dn': res.dn_s,
-                    'web_ctx_host': (WEB_CTX_HOST).decode('ascii'),
+                    'web_ctx_host': WEB_CTX_HOST,
                     'app_path_prefix': APP_PATH_PREFIX,
                 })
 
@@ -227,9 +223,11 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                 try:
                     smtp_conn.send_simple_message(
                         SMTP_FROM,
-                        [to_addr.encode('utf-8')],
+                        [to_addr],
                         'utf-8',
-                        default_headers+(
+                        (
+                            ('From', SMTP_FROM),
+                            ('Date', email.utils.formatdate(time.time(), True)),
                             ('Subject', smtp_subject),
                             ('To', to_addr),
                         ),
