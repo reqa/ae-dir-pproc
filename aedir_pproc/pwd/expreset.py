@@ -138,7 +138,7 @@ class AEDIRPwdJob(aedir.process.AEProcess):
             try:
                 self.ldap_conn.modify_s(res.dn_s, ldap_mod_list)
             except ldap0.LDAPError as ldap_error:
-                self.logger.warn(
+                self.logger.warning(
                     'LDAPError removing msPwdResetObject attrs in %r: %s',
                     res.dn_s,
                     ldap_error

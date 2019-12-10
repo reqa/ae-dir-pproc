@@ -69,7 +69,7 @@ class AEStatusUpdater(aedir.process.AEProcess):
                 attrlist=['aeStatus', 'aeExpiryStatus'],
             )
         except ldap0.LDAPError as ldap_error:
-            self.logger.warn('LDAPError searching %r: %s', expiry_filter, ldap_error)
+            self.logger.warning('LDAPError searching %r: %s', expiry_filter, ldap_error)
             return
         # process LDAP results
         for ldap_res in self.ldap_conn.results(msg_id):
@@ -88,7 +88,7 @@ class AEStatusUpdater(aedir.process.AEProcess):
                         ]
                     )
                 except ldap0.LDAPError as ldap_error:
-                    self.logger.warn('LDAPError modifying %r: %s', aeobj.dn_s, ldap_error)
+                    self.logger.warning('LDAPError modifying %r: %s', aeobj.dn_s, ldap_error)
                     self.error_counter += 1
                 else:
                     self.logger.info('Updated aeStatus in %r: %s', aeobj.dn_s, modlist)

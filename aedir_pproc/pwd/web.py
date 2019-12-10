@@ -325,7 +325,7 @@ class BaseApp(Default):
                 req_ctrls=[PWDPOLICY_DEREF_CONTROL],
             )
         except ldap0.LDAPError as ldap_err:
-            self.logger.warn(
+            self.logger.warning(
                 '%s.search_user_entry() search failed: %s',
                 self.__class__.__name__,
                 ldap_err,
@@ -369,7 +369,7 @@ class BaseApp(Default):
         try:
             self.ldap_conn.unbind_s()
         except (AttributeError, ldap0.LDAPError) as ldap_err:
-            self.logger.warn(
+            self.logger.warning(
                 '%s - Error during unbinding from %r: %s',
                 self.__class__.__name__,
                 self.ldap_conn.ldap_url_obj.connect_uri(),
@@ -454,7 +454,7 @@ class CheckPassword(BaseApp):
                 ]
             )
         except ldap0.INVALID_CREDENTIALS as ldap_err:
-            self.logger.warn(
+            self.logger.warning(
                 '%s.handle_user_request() binding as %r failed: %s',
                 self.__class__.__name__,
                 user_dn,
@@ -874,7 +874,7 @@ class FinishPasswordReset(ChangePassword):
                 req_ctrls=[self._sess_track_ctrl(user_dn)],
             )
         except ldap0.LDAPError as ldap_err:
-            self.logger.warn(
+            self.logger.warning(
                 '%s modify_s() failed for %r: %s',
                 self.__class__.__name__,
                 user_dn,
@@ -889,7 +889,7 @@ class FinishPasswordReset(ChangePassword):
                 req_ctrls=[self._sess_track_ctrl(user_dn)],
             )
         except ldap0.LDAPError as ldap_err:
-            self.logger.warn(
+            self.logger.warning(
                 '%s passwd_s() failed for %r: %s',
                 self.__class__.__name__,
                 user_dn,
