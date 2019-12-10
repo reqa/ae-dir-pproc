@@ -97,16 +97,22 @@ class AEDIRPwdJob(aedir.process.AEProcess):
         """
         Remove expired msPwdResetObject attributes
         """
+        expired_pwreset_filter = FILTERSTR_EXPIRE.format(currenttime=current_run_timestr)
         ldap_results = self.ldap_conn.search_s(
             self.ldap_conn.search_base,
             ldap0.SCOPE_SUBTREE,
-            filterstr=FILTERSTR_EXPIRE.format(currenttime=current_run_timestr),
+            filterstr=expired_pwreset_filter,
             attrlist=[
                 'objectClass',
                 'msPwdResetExpirationTime',
                 'msPwdResetTimestamp',
                 'msPwdResetAdminPw',
             ],
+        )
+        self.logger.debug(
+            '%d expired password resets found with %r',
+            len(ldap_results),
+            expired_pwreset_filter,
         )
         for res in ldap_results:
             self.logger.debug('Found %r: %r', res.dn_s, res.entry_as)
@@ -142,7 +148,7 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                     'Removed msPwdResetObject attributes from %r',
                     res.dn_s,
                 )
-            return # end of expire_pwd_reset()
+            # end of expire_pwd_reset()
 
     def run_worker(self, state):
         """
