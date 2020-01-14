@@ -3,10 +3,6 @@
 aedir_pproc.pwd.web - AE-DIR password self-service web application
 """
 
-from __future__ import absolute_import
-
-from ..__about__ import __version__, __author__, __license__
-
 # from Python's standard lib
 import re
 import sys
@@ -15,9 +11,7 @@ import time
 import socket
 import smtplib
 import hashlib
-
 from urllib.parse import quote_plus as url_quote_plus
-
 import email.utils
 
 # web.py
@@ -244,10 +238,10 @@ def add_http_headers():
             ('Referrer-Policy', 'same-origin'),
         ):
         web.header(header, value)
-    return # end of add_http_headers()
+    # end of add_http_headers()
 
 
-class Default(object):
+class Default:
     """
     Handle default index request
     """
@@ -269,7 +263,7 @@ class Default(object):
         add_http_headers()
         self.ldap_conn = None
         self.form = None
-        return # end of __init__()
+        # end of Default.__init__()
 
     def GET(self):
         """
@@ -355,7 +349,7 @@ class BaseApp(Default):
             self.ldap_conn.ldap_url_obj.connect_uri(),
             self.ldap_conn.whoami_s(),
         )
-        return # end of _open_ldap_conn()
+        # end of _open_ldap_conn()
 
     def _close_ldap_conn(self):
         """
@@ -375,7 +369,7 @@ class BaseApp(Default):
                 self.ldap_conn.ldap_url_obj.connect_uri(),
                 ldap_err,
             )
-        return # end of _close_ldap_conn()
+        # end of _close_ldap_conn()
 
     def handle_user_request(self, user_dn, user_entry):
         """
@@ -398,10 +392,10 @@ class BaseApp(Default):
             return RENDER.error(u'Internal error!')
         try:
             # search user entry
-            user_dn, user_entry = self.search_user_entry(dict([
-                (i.name, i.get_value())
+            user_dn, user_entry = self.search_user_entry({
+                i.name: i.get_value()
                 for i in self.form.inputs
-            ]))
+            })
         except ValueError:
             res = RENDER.error(u'Invalid input!')
         except ldap0.LDAPError:
@@ -666,6 +660,7 @@ class RequestPasswordReset(BaseApp):
                 'remote_ip': self.remote_ip,
                 'fromaddr': SMTP_FROM,
                 'userdn': user_dn,
+                'userdispname': user_entry['displayName'][0],
                 'web_ctx_host': web.ctx.host,
                 'app_path_prefix': APP_PATH_PREFIX,
                 'ldap_uri': self.ldap_conn.ldap_url_obj.connect_uri(),
@@ -714,7 +709,7 @@ class RequestPasswordReset(BaseApp):
             smtp_message,
         )
         smtp_conn.quit()
-        return # _send_pw()
+        # end of _send_pw()
 
     def handle_user_request(self, user_dn, user_entry):
         """
@@ -740,7 +735,11 @@ class RequestPasswordReset(BaseApp):
         )
         ldap_mod_list = [
             (ldap0.MOD_REPLACE, b'msPwdResetPasswordHash', [temp_pwd_hash.encode('ascii')]),
-            (ldap0.MOD_REPLACE, b'msPwdResetTimestamp', [ldap0.functions.strf_secs(current_time).encode('ascii')]),
+            (
+                ldap0.MOD_REPLACE,
+                b'msPwdResetTimestamp',
+                [ldap0.functions.strf_secs(current_time).encode('ascii')]
+            ),
             (
                 ldap0.MOD_REPLACE,
                 b'msPwdResetExpirationTime',
@@ -896,7 +895,7 @@ class FinishPasswordReset(ChangePassword):
                 ldap_err,
             )
             raise
-        return
+        # end of _ldap_user_operations()
 
     def handle_user_request(self, user_dn, user_entry):
         """
