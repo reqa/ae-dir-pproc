@@ -278,7 +278,6 @@ class BaseApp(Default):
     """
     post_form = web.form.Form()
     get_form = web.form.Form(USERNAME_FIELD)
-    logger = APP_LOGGER
     filterstr_template = '(|)'
 
     def _sess_track_ctrl(self, username='-/-'):
@@ -668,16 +667,18 @@ class RequestPasswordReset(BaseApp):
             smtp_message = read_template_file(EMAIL_TEMPLATE_ADMIN).format(**user_data_admin)
             smtp_subject = EMAIL_SUBJECT_ADMIN.format(**user_data_admin)
             admin_addrs = self._get_admin_mailaddrs(user_dn)
+            admin_to = ','.join(sorted(admin_addrs))
             smtp_conn.send_simple_message(
                 SMTP_FROM,
                 admin_addrs,
                 'utf-8',
                 default_headers+(
                     ('Subject', smtp_subject),
-                    ('To', ','.join(admin_addrs)),
+                    ('To', admin_to),
                 ),
                 smtp_message,
             )
+            self.logger.info('Sent password reset admin notification to %s', admin_to)
         else:
             admin_addrs = []
 
@@ -708,6 +709,7 @@ class RequestPasswordReset(BaseApp):
             ),
             smtp_message,
         )
+        self.logger.info('Sent reset password to %s', to_addr)
         smtp_conn.quit()
         # end of _send_pw()
 
