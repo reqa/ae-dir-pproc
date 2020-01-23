@@ -285,12 +285,12 @@ class AEGroupUpdater(aedir.process.AEProcess):
 
     def update_memberurl_groups(self):
         """
-        3. Update all static aeGroup entries which contain attribute 'memberURL'
+        3. Update all active aeGroup entries which contain attribute 'memberURL'
         """
         dynamic_groups = self.ldap_conn.search_s(
             self.ldap_conn.search_base,
             ldap0.SCOPE_SUBTREE,
-            '({0}=*)'.format(MEMBERURL_ATTR),
+            '(&({0}=*)(aeStatus=0))'.format(MEMBERURL_ATTR),
             attrlist=[
                 'aeDept',
                 'aeLocation',
