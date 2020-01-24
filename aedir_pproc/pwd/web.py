@@ -249,9 +249,10 @@ class RequestLogAdaptor(logging.LoggerAdapter):
 
     def process(self, msg, kwargs):
         return (
-            'IP=%s CLASS=%s - %s' % (
+            'IP=%s CLASS=%s REQID=%d - %s' % (
                 self.extra['remote_ip'],
                 self.extra['req_class'],
+                self.extra['req_id'],
                 msg,
             ),
             kwargs,
@@ -274,6 +275,7 @@ class Default:
             {
                 'remote_ip': self.remote_ip,
                 'req_class': '.'.join((self.__class__.__module__, self.__class__.__name__)),
+                'req_id': id(self),
             }
         )
         self.logger.debug(
@@ -303,7 +305,7 @@ class BaseApp(Default):
     get_form = web.form.Form(USERNAME_FIELD)
     filterstr_template = '(|)'
 
-    def _sess_track_ctrl(self, username='-/-'):
+    def _sess_track_ctrl(self):
         """
         return LDAPv3 session tracking control representing current user
         """
@@ -311,7 +313,7 @@ class BaseApp(Default):
             self.remote_ip,
             web.ctx.homedomain,
             SESSION_TRACKING_FORMAT_OID_USERNAME,
-            username,
+            str(id(self)),
         )
 
     def search_user_entry(self, inputs):
@@ -585,7 +587,7 @@ class ChangePassword(BaseApp):
                 user_dn,
                 None,
                 self.form.d.newpassword1.encode('utf-8'),
-                req_ctrls=[self._sess_track_ctrl(user_dn)],
+                req_ctrls=[self._sess_track_ctrl()],
             )
         except ldap0.INVALID_CREDENTIALS:
             res = RENDER.changepw_form(
@@ -895,7 +897,7 @@ class FinishPasswordReset(ChangePassword):
             self.ldap_conn.modify_s(
                 user_dn,
                 ldap_mod_list,
-                req_ctrls=[self._sess_track_ctrl(user_dn)],
+                req_ctrls=[self._sess_track_ctrl()],
             )
         except ldap0.LDAPError as ldap_err:
             self.logger.warning(
@@ -910,7 +912,7 @@ class FinishPasswordReset(ChangePassword):
                 user_dn,
                 None,
                 new_password_ldap,
-                req_ctrls=[self._sess_track_ctrl(user_dn)],
+                req_ctrls=[self._sess_track_ctrl()],
             )
         except ldap0.LDAPError as ldap_err:
             self.logger.warning(
