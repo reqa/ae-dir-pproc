@@ -11,6 +11,7 @@ import time
 import socket
 import smtplib
 import hashlib
+import logging
 from urllib.parse import quote_plus as url_quote_plus
 import email.utils
 
@@ -44,6 +45,9 @@ from aedirpwd_cnf import \
     PWD_ADMIN_LEN, PWD_ADMIN_MAILTO, PWD_EXPIRETIMESPAN, PWD_LENGTH, \
     PWD_RESET_ENABLED, PWD_TMP_CHARS, PWD_TMP_HASH_ALGO, \
     SMTP_DEBUGLEVEL, SMTP_FROM, SMTP_LOCALHOSTNAME, SMTP_TLS_CACERTS, SMTP_URL
+
+from ..__about__ import __version__
+
 
 USER_ATTRS = [
     'objectClass',
@@ -241,17 +245,36 @@ def add_http_headers():
     # end of add_http_headers()
 
 
+class RequestLogAdaptor(logging.LoggerAdapter):
+
+    def process(self, msg, kwargs):
+        return (
+            'IP=%s CLASS=%s - %s' % (
+                self.extra['remote_ip'],
+                self.extra['req_class'],
+                msg,
+            ),
+            kwargs,
+        )
+
+
 class Default:
     """
     Handle default index request
     """
     ldap_url = aedir.AEDirUrl(PWD_LDAP_URL)
-    logger = APP_LOGGER
 
     def __init__(self):
         self.remote_ip = web.ctx.env.get(
             'FORWARDED_FOR',
             web.ctx.env.get('HTTP_X_FORWARDED_FOR', web.ctx.ip)
+        )
+        self.logger = RequestLogAdaptor(
+            APP_LOGGER,
+            {
+                'remote_ip': self.remote_ip,
+                'req_class': '.'.join((self.__class__.__module__, self.__class__.__name__)),
+            }
         )
         self.logger.debug(
             '%s() %s request from %s (via %s)',
@@ -953,7 +976,7 @@ def main():
     run the web application
     """
     # Initialize web application
-    APP_LOGGER.debug('Starting web application script %r', sys.argv[0])
+    APP_LOGGER.debug('Starting %s %s', sys.argv[0], __version__)
     app = web.application(URL2CLASS_MAPPING, globals(), autoreload=bool(WEB_ERROR))
     # Change to directory where the script is located
     APP_LOGGER.debug('chdir to %r', TEMPLATES_DIRNAME)
