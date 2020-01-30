@@ -279,8 +279,7 @@ class Default:
             }
         )
         self.logger.debug(
-            '%s() %s request from %s (via %s)',
-            self.__class__.__name__,
+            '%s request from %s (via %s)',
             web.ctx.env['REQUEST_METHOD'],
             self.remote_ip,
             web.ctx.ip,
@@ -329,8 +328,7 @@ class BaseApp(Default):
             self.filterstr_template.format(**filterstr_inputs_dict)
         )
         self.logger.debug(
-            '%s.search_user_entry() base=%r filterstr=%r',
-            self.__class__.__name__,
+            '.search_user_entry() base=%r filterstr=%r',
             self.ldap_conn.ldap_url_obj.dn,
             filterstr,
         )
@@ -344,8 +342,7 @@ class BaseApp(Default):
             )
         except ldap0.LDAPError as ldap_err:
             self.logger.warning(
-                '%s.search_user_entry() search failed: %s',
-                self.__class__.__name__,
+                '.search_user_entry() search failed: %s',
                 ldap_err,
             )
             raise
@@ -363,13 +360,13 @@ class BaseApp(Default):
             self.ldap_conn = aedir.AEDirObject(PWD_LDAP_URL, trace_level=0)
         except ldap0.LDAPError as ldap_err:
             self.logger.error(
-                '%s - Error connecting to %r: %s',
-                self.__class__.__name__, PWD_LDAP_URL, ldap_err,
+                'Error connecting to %r: %s',
+                PWD_LDAP_URL,
+                ldap_err,
             )
             raise
         self.logger.debug(
-            '%s - Successfully bound to %r as %r',
-            self.__class__.__name__,
+            'Successfully bound to %r as %r',
             self.ldap_conn.ldap_url_obj.connect_uri(),
             self.ldap_conn.whoami_s(),
         )
@@ -380,16 +377,14 @@ class BaseApp(Default):
         Close LDAP connection
         """
         self.logger.debug(
-            '%s - Unbind from %r',
-            self.__class__.__name__,
+            'Unbind from %r',
             self.ldap_conn.ldap_url_obj.connect_uri(),
         )
         try:
             self.ldap_conn.unbind_s()
         except (AttributeError, ldap0.LDAPError) as ldap_err:
             self.logger.warning(
-                '%s - Error during unbinding from %r: %s',
-                self.__class__.__name__,
+                'Error during unbinding from %r: %s',
                 self.ldap_conn.ldap_url_obj.connect_uri(),
                 ldap_err,
             )
@@ -423,7 +418,7 @@ class BaseApp(Default):
         except ValueError:
             res = RENDER.error(u'Invalid input!')
         except ldap0.LDAPError:
-            res = RENDER.error(u'Error searching user!')
+            res = RENDER.error(u'Searching the user account failed!')
         else:
             # Call specific handler for LDAP user
             res = self.handle_user_request(user_dn, user_entry)
@@ -473,8 +468,7 @@ class CheckPassword(BaseApp):
             )
         except ldap0.INVALID_CREDENTIALS as ldap_err:
             self.logger.warning(
-                '%s.handle_user_request() binding as %r failed: %s',
-                self.__class__.__name__,
+                '.handle_user_request() binding as %r failed: %s',
                 user_dn,
                 ldap_err,
             )
@@ -485,8 +479,7 @@ class CheckPassword(BaseApp):
                 time.localtime(current_time+ppolicy_error.timeBeforeExpiration)
             )
             self.logger.info(
-                '%s.handle_user_request() Password of %r will expire soon at %r (%d seconds)',
-                self.__class__.__name__,
+                '.handle_user_request() Password of %r will expire soon at %r (%d seconds)',
                 user_dn,
                 expire_time_str,
                 ppolicy_error.timeBeforeExpiration,
@@ -901,8 +894,7 @@ class FinishPasswordReset(ChangePassword):
             )
         except ldap0.LDAPError as ldap_err:
             self.logger.warning(
-                '%s modify_s() failed for %r: %s',
-                self.__class__.__name__,
+                'Modifying entry %r failed: %s',
                 user_dn,
                 ldap_err,
             )
@@ -916,8 +908,7 @@ class FinishPasswordReset(ChangePassword):
             )
         except ldap0.LDAPError as ldap_err:
             self.logger.warning(
-                '%s passwd_s() failed for %r: %s',
-                self.__class__.__name__,
+                'passwd_s() failed for %r: %s',
                 user_dn,
                 ldap_err,
             )
