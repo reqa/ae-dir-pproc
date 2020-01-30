@@ -148,8 +148,8 @@ if not WEB_CONFIG_DEBUG:
 USERNAME_FIELD = web.form.Textbox(
     'username',
     web.form.notnull,
-    web.form.regexp('^[a-zA-Z0-9._-]+$', u'Invalid user name.'),
-    description=u'User name:'
+    web.form.regexp('^[a-zA-Z0-9._-]+$', 'Invalid user name.'),
+    description='User name:'
 )
 
 # Declaration for text input field for 'email'
@@ -157,56 +157,56 @@ EMAIL_FIELD = web.form.Textbox(
     'email',
     web.form.notnull,
     web.form.regexp(
-        r'^[a-zA-Z0-9@.+=/_ -]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*$',
-        u'Invalid e-mail address.'
+        '^[a-zA-Z0-9@.+=/_ -]+@[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*$',
+        'Invalid e-mail address.'
     ),
-    description=u'E-mail address:'
+    description='E-mail address:'
 )
 
 # Declaration for text input field for old password
 USERPASSWORD_FIELD = web.form.Password(
     'oldpassword',
     web.form.notnull,
-    web.form.regexp(r'^.*$', u''),
-    description=u'Old password'
+    web.form.regexp('^.*$', ''),
+    description='Old password'
 )
 
 TEMP1PASSWORD_FIELD = web.form.Password(
     'temppassword1',
     web.form.notnull,
     web.form.regexp(
-        u'^[%s]+$' % (re.escape(PWD_TMP_CHARS),),
-        u'Invalid input format.'
+        '^[%s]+$' % (re.escape(PWD_TMP_CHARS),),
+        'Invalid input format.'
     ),
-    description=u'Temporary password part #1'
+    description='Temporary password part #1'
 )
 
 TEMP2PASSWORD_FIELD = web.form.Password(
     'temppassword2',
     #web.form.notnull,
     web.form.regexp(
-        r'^[%s]*$' % (re.escape(PWD_TMP_CHARS),),
-        u'Invalid input format.'
+        '^[%s]*$' % (re.escape(PWD_TMP_CHARS),),
+        'Invalid input format.'
     ),
-    description=u'Temporary password part #2'
+    description='Temporary password part #2'
 )
 
 # Declarations for new password fields
 
-VALID_NEWPASSWORD_REGEXP = web.form.regexp(r'^.+$', u'Passwort rules violated!')
+VALID_NEWPASSWORD_REGEXP = web.form.regexp('^.+$', 'Passwort rules violated!')
 
 NEWPASSWORD1_FIELD = web.form.Password(
     'newpassword1',
     web.form.notnull,
     VALID_NEWPASSWORD_REGEXP,
-    description=u'New password'
+    description='New password'
 )
 
 NEWPASSWORD2_FIELD = web.form.Password(
     'newpassword2',
     web.form.notnull,
     VALID_NEWPASSWORD_REGEXP,
-    description=u'New password (repeat)'
+    description='New password (repeat)'
 )
 
 
@@ -246,6 +246,9 @@ def add_http_headers():
 
 
 class RequestLogAdaptor(logging.LoggerAdapter):
+    """
+    wrapper for adding more request-specific information to log messages
+    """
 
     def process(self, msg, kwargs):
         return (
@@ -350,7 +353,12 @@ class BaseApp(Default):
             user.entry_b.update(
                 user.ctrls[0].derefRes['pwdPolicySubentry'][0].entry_b
             )
+        self.logger.debug(
+            '.search_user_entry() returns %r',
+            (user.dn_s, user.entry_s),
+        )
         return user.dn_s, user.entry_s
+        # end of search_user_entry()
 
     def _open_ldap_conn(self):
         """
@@ -408,17 +416,18 @@ class BaseApp(Default):
         try:
             self._open_ldap_conn()
         except ldap0.LDAPError:
-            return RENDER.error(u'Internal error!')
+            return RENDER.error('Internal error!')
         try:
             # search user entry
             user_dn, user_entry = self.search_user_entry({
                 i.name: i.get_value()
                 for i in self.form.inputs
             })
-        except ValueError:
-            res = RENDER.error(u'Invalid input!')
+        except ValueError as err:
+            self.logger.warning('Invalid input: %s', err)
+            res = RENDER.error('Invalid input!')
         except ldap0.LDAPError:
-            res = RENDER.error(u'Searching the user account failed!')
+            res = RENDER.error('Searching the user account failed!')
         else:
             # Call specific handler for LDAP user
             res = self.handle_user_request(user_dn, user_entry)
@@ -436,7 +445,7 @@ class CheckPassword(BaseApp):
     post_form = web.form.Form(
         USERNAME_FIELD,
         USERPASSWORD_FIELD,
-        web.form.Button('submit', type='submit', description=u'Check password'),
+        web.form.Button('submit', type='submit', description='Check password'),
     )
 
     def GET(self):
@@ -445,11 +454,12 @@ class CheckPassword(BaseApp):
         with username pre-filled
         """
         try:
-            get_input = web.input(username=u'')
-        except UnicodeError:
-            return RENDER.checkpw_form(u'', u'Invalid input')
+            get_input = web.input(username='')
+        except UnicodeError as err:
+            self.logger.warning('Invalid input: %s', err)
+            return RENDER.checkpw_form('', 'Invalid input')
         else:
-            return RENDER.checkpw_form(get_input.username, u'')
+            return RENDER.checkpw_form(get_input.username, '')
 
     def handle_user_request(self, user_dn, user_entry):
         """
@@ -468,38 +478,40 @@ class CheckPassword(BaseApp):
             )
         except ldap0.INVALID_CREDENTIALS as ldap_err:
             self.logger.warning(
-                '.handle_user_request() binding as %r failed: %s',
+                'Binding as %r failed: %s',
                 user_dn,
                 ldap_err,
             )
-            return RENDER.checkpw_form(self.form.d.username, u'Wrong password!')
+            return RENDER.checkpw_form(self.form.d.username, 'Wrong password!')
         except PasswordPolicyExpirationWarning as ppolicy_error:
             expire_time_str = time.strftime(
                 TIME_DISPLAY_FORMAT,
                 time.localtime(current_time+ppolicy_error.timeBeforeExpiration)
             )
             self.logger.info(
-                '.handle_user_request() Password of %r will expire soon at %r (%d seconds)',
+                'Password of %r will expire soon at %r (%d seconds)',
                 user_dn,
                 expire_time_str,
                 ppolicy_error.timeBeforeExpiration,
             )
             return RENDER.changepw_form(
                 self.form.d.username,
-                u'Password will expire soon at %s. Change it now!' % (expire_time_str)
+                'Password will expire soon at %s. Change it now!' % (expire_time_str)
             )
         except PasswordPolicyException as ppolicy_error:
+            self.logger.warning('Password policy error: %s', ppolicy_error)
             return RENDER.changepw_form(
                 self.form.d.username,
                 str(ppolicy_error)
             )
-        except ldap0.LDAPError:
-            return RENDER.error(u'Internal error!')
+        except ldap0.LDAPError as ldap_err:
+            self.logger.warning('LDAP error: %s', ldap_err)
+            return RENDER.error('Internal error!')
         # Try to display until when password is still valid
         try:
             pwd_max_age = int(user_entry['pwdMaxAge'][0])
         except (ValueError, KeyError):
-            valid_until = u'unknown'
+            valid_until = 'unknown'
         else:
             pwd_changed_timestamp = ldap0.functions.strp_secs(user_entry['pwdChangedTime'][0])
             expire_timestamp = pwd_changed_timestamp+pwd_max_age
@@ -530,7 +542,7 @@ class ChangePassword(BaseApp):
         web.form.Button(
             'submit',
             type='submit',
-            description=u'Change password'
+            description='Change password'
         ),
     )
 
@@ -540,25 +552,32 @@ class ChangePassword(BaseApp):
         with username pre-filled
         """
         try:
-            get_input = web.input(username=u'')
-        except UnicodeError:
-            return RENDER.changepw_form(u'', u'Invalid input')
+            get_input = web.input(username='')
+        except UnicodeError as err:
+            self.logger.warning('Invalid input: %s', err)
+            return RENDER.changepw_form('', 'Invalid input')
         else:
-            return RENDER.changepw_form(get_input.username, u'')
+            return RENDER.changepw_form(get_input.username, '')
 
     def _check_pw_input(self, user_entry):
         if self.form.d.newpassword1 != self.form.d.newpassword2:
-            return u'New password values differ!'
+            return 'New password values differ!'
         if 'pwdMinLength' in user_entry:
             pwd_min_len = int(user_entry['pwdMinLength'][0])
             if len(self.form.d.newpassword1) < pwd_min_len:
-                return u'New password must be at least %d characters long!' % (pwd_min_len)
+                self.logger.warning(
+                    'Password of %r not long enough, only got %d chars.',
+                    user_entry['uid'][0],
+                    len(self.form.d.newpassword1),
+                )
+                return 'New password must be at least %d characters long!' % (pwd_min_len)
         if 'pwdChangedTime' in user_entry and 'pwdMinAge' in user_entry:
             pwd_changed_timestamp = ldap0.functions.strp_secs(user_entry['pwdChangedTime'][0])
             pwd_min_age = int(user_entry['pwdMinAge'][0])
             next_pwd_change_timespan = pwd_changed_timestamp + pwd_min_age - time.time()
             if next_pwd_change_timespan > 0:
-                return u'Password is too young to change! You can try again after %d secs.' % (
+                self.logger.warning('Password of %r is too young to change!', user_entry['uid'][0])
+                return 'Password is too young to change! You can try again after %d secs.' % (
                     next_pwd_change_timespan
                 )
         return None # end of _check_pw_input()
@@ -582,20 +601,23 @@ class ChangePassword(BaseApp):
                 self.form.d.newpassword1.encode('utf-8'),
                 req_ctrls=[self._sess_track_ctrl()],
             )
-        except ldap0.INVALID_CREDENTIALS:
+        except ldap0.INVALID_CREDENTIALS as ldap_err:
+            self.logger.warning('Old password of %r wrong: %s', user_dn, ldap_err)
             res = RENDER.changepw_form(
                 self.form.d.username,
-                u'Old password wrong!',
+                'Old password wrong!',
             )
         except ldap0.CONSTRAINT_VIOLATION as ldap_err:
+            self.logger.warning('Changing password of %r failed: %s', user_dn, ldap_err)
             res = RENDER.changepw_form(
                 self.form.d.username,
-                u'Password rules violation: {0}'.format(
+                'Password rules violation: {0}'.format(
                     ldap_err.args[0]['info'].decode('utf-8'),
                 ),
             )
-        except ldap0.LDAPError:
-            res = RENDER.error(u'Internal error!')
+        except ldap0.LDAPError as ldap_err:
+            self.logger.warning('LDAP error: %s', ldap_err)
+            res = RENDER.error('Internal error!')
         else:
             res = RENDER.changepw_action(
                 self.form.d.username,
@@ -619,7 +641,7 @@ class RequestPasswordReset(BaseApp):
         web.form.Button(
             'submit',
             type='submit',
-            description=u'Set new password'
+            description='Set new password'
         ),
     )
 
@@ -629,11 +651,12 @@ class RequestPasswordReset(BaseApp):
         with username pre-filled
         """
         try:
-            get_input = web.input(username=u'')
-        except UnicodeError:
-            return RENDER.requestpw_form(u'', u'Invalid input')
+            get_input = web.input(username='')
+        except UnicodeError as err:
+            self.logger.warning('Invalid input: %s', err)
+            return RENDER.requestpw_form('', 'Invalid input')
         else:
-            return RENDER.requestpw_form(get_input.username, u'')
+            return RENDER.requestpw_form(get_input.username, '')
 
     def _get_admin_mailaddrs(self, user_dn):
         try:
@@ -713,7 +736,7 @@ class RequestPasswordReset(BaseApp):
             'web_ctx_host': web.ctx.host,
             'app_path_prefix': APP_PATH_PREFIX,
             'ldap_uri': self.ldap_conn.ldap_url_obj.connect_uri(),
-            'admin_email_addrs': u'\n'.join(admin_addrs),
+            'admin_email_addrs': '\n'.join(admin_addrs),
         }
         smtp_message = read_template_file(EMAIL_TEMPLATE_PERSONAL).format(**user_data_user)
         smtp_subject = EMAIL_SUBJECT_PERSONAL.format(**user_data_user)
@@ -792,7 +815,7 @@ class RequestPasswordReset(BaseApp):
                 req_ctrls=[self._sess_track_ctrl()],
             )
         except ldap0.LDAPError:
-            res = RENDER.error(u'Internal error!')
+            res = RENDER.error('Internal error!')
         else:
             try:
                 self._send_pw(
@@ -809,7 +832,7 @@ class RequestPasswordReset(BaseApp):
                 )
                 res = RENDER.requestpw_form(
                     self.form.d.username,
-                    u'Error sending e-mail via SMTP!',
+                    'Error sending e-mail via SMTP!',
                 )
             else:
                 res = RENDER.requestpw_action(
@@ -841,7 +864,7 @@ class FinishPasswordReset(ChangePassword):
         web.form.Button(
             'submit',
             type='submit',
-            description=u'Change password'
+            description='Change password'
         ),
     )
 
@@ -850,24 +873,24 @@ class FinishPasswordReset(ChangePassword):
         handle GET request by returning input form with username and
         1st temporary password part pre-filled
         """
-        get_input = web.input(username=u'', temppassword1=u'')
+        get_input = web.input(username='', temppassword1='')
         if not get_input.username or not get_input.temppassword1:
-            return RENDER.error(u'Invalid input')
+            return RENDER.error('Invalid input')
         try:
             self._open_ldap_conn()
         except ldap0.LDAPError:
-            return RENDER.error(u'Internal LDAP error!')
+            return RENDER.error('Internal LDAP error!')
         try:
             _, user_entry = self.search_user_entry({'username': get_input.username})
         except ldap0.LDAPError:
-            return RENDER.error(u'Error searching user!')
+            return RENDER.error('Error searching user!')
         self._close_ldap_conn()
         pwd_admin_len = int(user_entry.get('msPwdResetAdminPwLen', [str(PWD_ADMIN_LEN)])[0])
         return RENDER.resetpw_form(
             get_input.username,
             pwd_admin_len,
             get_input.temppassword1,
-            u''
+            ''
         ) # end of FinishPasswordReset.GET()
 
     def _ldap_user_operations(self, user_dn, user_entry, temp_pwd_hash, new_password_ldap):
@@ -923,7 +946,7 @@ class FinishPasswordReset(ChangePassword):
         temppassword2 = self.form.d.temppassword2
         pwd_admin_len = int(user_entry.get('msPwdResetAdminPwLen', [str(PWD_ADMIN_LEN)])[0])
         temp_pwd_hash = pwd_hash(
-            u''.join((temppassword1, temppassword2)),
+            ''.join((temppassword1, temppassword2)),
             user_entry.get('msPwdResetHashAlgorithm', [PWD_TMP_HASH_ALGO])[0],
         )
         pw_input_check_msg = self._check_pw_input(user_entry)
@@ -946,18 +969,18 @@ class FinishPasswordReset(ChangePassword):
                 self.form.d.username,
                 pwd_admin_len,
                 self.form.d.temppassword1,
-                u'Temporary password(s) wrong!',
+                'Temporary password(s) wrong!',
             )
         except ldap0.CONSTRAINT_VIOLATION as ldap_err:
             res = RENDER.requestpw_form(
                 self.form.d.username,
                 (
-                    u'Constraint violation (password rules): {0}'
-                    u' / You have to request password reset again!'
+                    'Constraint violation (password rules): {0}'
+                    ' / You have to request password reset again!'
                 ).format(ldap_err.args[0]['info'].decode('utf-8'))
             )
         except ldap0.LDAPError:
-            res = RENDER.error(u'Internal error!')
+            res = RENDER.error('Internal error!')
         else:
             res = RENDER.resetpw_action(self.form.d.username, user_dn)
         return res
