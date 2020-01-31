@@ -580,7 +580,8 @@ class ChangePassword(BaseApp):
                 return 'Password is too young to change! You can try again after %d secs.' % (
                     next_pwd_change_timespan
                 )
-        return None # end of _check_pw_input()
+        return None
+        # end of _check_pw_input()
 
     def handle_user_request(self, user_dn, user_entry):
         """
@@ -966,13 +967,19 @@ class FinishPasswordReset(ChangePassword):
                 self.form.d.newpassword1.encode('utf-8'),
             )
         except ldap0.NO_SUCH_ATTRIBUTE:
+            self.logger.warning('Temporary password of %r wrong!', user_dn)
             res = RENDER.resetpw_form(
                 self.form.d.username,
                 pwd_admin_len,
                 self.form.d.temppassword1,
-                'Temporary password(s) wrong!',
+                'Temporary password wrong!',
             )
         except ldap0.CONSTRAINT_VIOLATION as ldap_err:
+            self.logger.warning(
+                'Password constraints for %r violated: %s',
+                user_dn,
+                ldap_err,
+            )
             res = RENDER.requestpw_form(
                 self.form.d.username,
                 (
@@ -983,8 +990,10 @@ class FinishPasswordReset(ChangePassword):
         except ldap0.LDAPError:
             res = RENDER.error('Internal error!')
         else:
+            self.logger.info('Password reset completed for %r.', user_dn)
             res = RENDER.resetpw_action(self.form.d.username, user_dn)
         return res
+
 
 application = web.application(URL2CLASS_MAPPING, globals(), autoreload=bool(WEB_ERROR)).wsgifunc()
 
