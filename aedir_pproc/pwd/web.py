@@ -208,41 +208,6 @@ NEWPASSWORD2_FIELD = web.form.Password(
 )
 
 
-def add_http_headers():
-    """
-    Add more HTTP headers to response
-    """
-    csp_value = ' '.join((
-        "base-uri 'none';",
-        "child-src 'none';",
-        "connect-src 'none';",
-        "default-src 'none';",
-        "font-src 'self';",
-        "form-action 'self';",
-        "frame-ancestors 'none';",
-        "frame-src 'none';",
-        "img-src 'self' data:;",
-        "media-src 'none';",
-        "object-src 'none';",
-        "script-src 'none';",
-        "style-src 'self';",
-    ))
-    for header, value in (
-            ('Cache-Control', 'no-store,no-cache,max-age=0,must-revalidate'),
-            ('X-XSS-Protection', '1; mode=block'),
-            ('X-DNS-Prefetch-Control', 'off'),
-            ('X-Content-Type-Options', 'nosniff'),
-            ('X-Frame-Options', 'deny'),
-            ('Server', 'unknown'),
-            ('Content-Security-Policy', csp_value),
-            ('X-Webkit-CSP', csp_value),
-            ('X-Content-Security-Policy', csp_value),
-            ('Referrer-Policy', 'same-origin'),
-        ):
-        web.header(header, value)
-    # end of add_http_headers()
-
-
 class RequestLogAdaptor(logging.LoggerAdapter):
     """
     wrapper for adding more request-specific information to log messages
@@ -285,10 +250,47 @@ class Default:
             self.remote_ip,
             web.ctx.ip,
         )
-        add_http_headers()
+        self._add_headers()
         self.ldap_conn = None
         self.form = None
         # end of Default.__init__()
+
+    @staticmethod
+    def _add_headers():
+        """
+        Add more HTTP headers to response
+        """
+        csp_value = ' '.join((
+        ))
+        csp_value = ' '.join((
+            "base-uri 'none';",
+            "child-src 'none';",
+            "connect-src 'none';",
+            "default-src 'none';",
+            "font-src 'self';",
+            "form-action 'self';",
+            "frame-ancestors 'none';",
+            "frame-src 'none';",
+            "img-src 'self' data:;",
+            "media-src 'none';",
+            "object-src 'none';",
+            "script-src 'none';",
+            "style-src 'self';",
+        ))
+        for header, value in (
+                ('Cache-Control', 'no-store,no-cache,max-age=0,must-revalidate'),
+                ('X-XSS-Protection', '1; mode=block'),
+                ('X-DNS-Prefetch-Control', 'off'),
+                ('X-Content-Type-Options', 'nosniff'),
+                ('X-Frame-Options', 'deny'),
+                ('Server', 'unknown'),
+                ('Content-Security-Policy', csp_value),
+                ('X-Webkit-CSP', csp_value),
+                ('X-Content-Security-Policy', csp_value),
+                ('Referrer-Policy', 'same-origin'),
+            ):
+            web.header(header, value)
+        # end of Default._add_headers()
 
     def GET(self):
         """
