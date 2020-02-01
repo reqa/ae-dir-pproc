@@ -86,9 +86,7 @@ PWDPOLICY_DEREF_CONTROL = DereferenceControl(
 )
 
 # initialize a custom logger
-APP_LOGGER = aedir.init_logger(
-    log_name=os.path.basename(sys.argv[0]),
-)
+APP_LOGGER = aedir.init_logger(log_name='ae-dir-pwd')
 
 # Mapping of request URL path to Python handler class
 URL2CLASS_MAPPING = (
@@ -505,7 +503,11 @@ class CheckPassword(BaseApp):
                 str(ppolicy_error)
             )
         except ldap0.LDAPError as ldap_err:
-            self.logger.warning('LDAP error: %s', ldap_err)
+            self.logger.warning(
+                'LDAP error checking password of %r: %s',
+                user_dn,
+                ldap_err,
+            )
             return RENDER.error('Internal error!')
         # Try to display until when password is still valid
         try:
@@ -518,6 +520,11 @@ class CheckPassword(BaseApp):
             valid_until = time.strftime(
                 TIME_DISPLAY_FORMAT,
                 time.localtime(expire_timestamp)
+            )
+            self.logger.info(
+                'User %r checked own password, valid until %s.',
+                user_dn,
+                valid_until,
             )
         # Finally render output page with success message
         return RENDER.checkpw_action(
