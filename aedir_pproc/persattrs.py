@@ -141,7 +141,7 @@ class SyncProcess(aedir.process.TimestampStateMixin, aedir.process.AEProcess):
                     aeperson_status = int(aeperson.entry_s['aeStatus'][0])
                     aeuser_status = int(aeuser.entry_s['aeStatus'][0])
                     if aeperson_status > 0 and aeuser_status <= 0:
-                        new_aeuser_entry['aeStatus'] = '1'
+                        new_aeuser_entry['aeStatus'] = ['1']
                         self.deactivate_counter += 1
                     else:
                         new_aeuser_entry['aeStatus'] = aeuser.entry_s['aeStatus']
@@ -161,29 +161,30 @@ class SyncProcess(aedir.process.TimestampStateMixin, aedir.process.AEProcess):
                             'Nothing to do in %r => skipped',
                             aeuser.dn_s,
                         )
+                        continue
+
+                    self.logger.debug(
+                        'Update existing entry %r: %r',
+                        aeuser.dn_s,
+                        modlist,
+                    )
+                    try:
+                        self.ldap_conn.modify_s(aeuser.dn_s, modlist)
+                    except ldap0.LDAPError as ldap_err:
+                        self.logger.error(
+                            'LDAP error modifying %r with %r: %s',
+                            aeuser.dn_s,
+                            modlist,
+                            ldap_err,
+                        )
+                        self.error_counter += 1
                     else:
-                        self.logger.debug(
-                            'Update existing entry %r: %r',
+                        self.logger.info(
+                            'Updated entry %r: %r',
                             aeuser.dn_s,
                             modlist,
                         )
-                        try:
-                            self.ldap_conn.modify_s(aeuser.dn_s, modlist)
-                        except ldap0.LDAPError as ldap_err:
-                            self.logger.error(
-                                'LDAP error modifying %r with %r: %s',
-                                aeuser.dn_s,
-                                modlist,
-                                ldap_err,
-                            )
-                            self.error_counter += 1
-                        else:
-                            self.logger.info(
-                                'Updated entry %r: %r',
-                                aeuser.dn_s,
-                                modlist,
-                            )
-                            self.modify_counter += 1
+                        self.modify_counter += 1
 
         return current_time_str # end of run_worker()
 
