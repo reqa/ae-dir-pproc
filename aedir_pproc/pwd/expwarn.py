@@ -5,19 +5,11 @@ aedir_pproc.pwd.expwarn - send password expiry warnings via e-mail
 
 from __future__ import absolute_import
 
-from ..__about__ import __version__, __author__, __license__
-
 # from Python's standard lib
 import os
-import sys
 import smtplib
 import time
 import email.utils
-from email.header import Header as email_Header
-
-# mailutil is optional dependency of module aedir
-# => provoke first fail here before doing anything else
-import mailutil
 
 # the separate python-aedir module
 import aedir.process
@@ -25,6 +17,20 @@ import aedir.process
 # from ldap0
 import ldap0
 import ldap0.functions
+
+# Import constants from configuration module
+from aedirpwd_cnf import \
+    APP_PATH_PREFIX, \
+    SMTP_DEBUGLEVEL, \
+    SMTP_FROM, \
+    SMTP_LOCALHOSTNAME, \
+    SMTP_TLS_CACERTS, \
+    SMTP_URL, \
+    TEMPLATES_DIRNAME, \
+    USER_MAIL_ENABLED, \
+    WEB_CTX_HOST
+
+from ..__about__ import __version__, __author__, __license__
 
 #-----------------------------------------------------------------------
 # Configuration constants
@@ -60,18 +66,6 @@ FILTERSTR_USER = '(&(objectClass=aeUser)(aeStatus=0)(displayName=*)(mail=*))'
 
 # Maximum timespan to search for password-less entries in the past
 NOTIFY_OLDEST_TIMESPAN = 1.75 * 86400.0
-
-# Import constants from configuration module
-from aedirpwd_cnf import \
-    APP_PATH_PREFIX, \
-    SMTP_DEBUGLEVEL, \
-    SMTP_FROM, \
-    SMTP_LOCALHOSTNAME, \
-    SMTP_TLS_CACERTS, \
-    SMTP_URL, \
-    TEMPLATES_DIRNAME, \
-    USER_MAIL_ENABLED, \
-    WEB_CTX_HOST
 
 # E-Mail subject for notification message
 PWD_EXPIRYWARN_MAIL_SUBJECT = u'Password of Æ-DIR account "{user_uid}" will expire soon!'
@@ -246,6 +240,9 @@ class AEDIRPwdJob(aedir.process.AEProcess):
 
 
 def main():
+    """
+    run the process
+    """
     with AEDIRPwdJob() as ae_process:
         ae_process.run(max_runs=1)
 
