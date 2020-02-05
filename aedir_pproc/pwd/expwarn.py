@@ -197,44 +197,45 @@ class AEDIRPwdJob(aedir.process.AEProcess):
             )
         else:
             # Read mail template file
-            with open(PWD_EXPIRYWARN_MAIL_TEMPLATE, 'rb') as template_file:
-                smtp_message_tmpl = template_file.read().decode('utf-8')
-            smtp_conn = self._smtp_connection(
-                SMTP_URL,
-                local_hostname=SMTP_LOCALHOSTNAME,
-                ca_certs=SMTP_TLS_CACERTS,
-                debug_level=SMTP_DEBUGLEVEL,
-            )
-            notified_users = []
-            for user_data in pwd_expire_warning_list:
-                to_addr = user_data['emailaddr']
-                smtp_message = smtp_message_tmpl.format(**user_data)
-                smtp_subject = PWD_EXPIRYWARN_MAIL_SUBJECT.format(**user_data)
-                self.logger.debug('smtp_subject = %r', smtp_subject)
-                self.logger.debug('smtp_message = %r', smtp_message)
-                try:
-                    smtp_conn.send_simple_message(
-                        SMTP_FROM,
-                        [to_addr],
-                        'utf-8',
-                        (
-                            ('From', SMTP_FROM),
-                            ('Date', email.utils.formatdate(time.time(), True)),
-                            ('Subject', smtp_subject),
-                            ('To', to_addr),
-                        ),
-                        smtp_message,
-                    )
-                except smtplib.SMTPRecipientsRefused as smtp_err:
-                    self.logger.error('Recipient %r rejected: %s', to_addr, smtp_err)
-                    continue
-                else:
-                    notified_users.append(user_data['user_uid'])
-            self.logger.info(
-                'Sent %d password expiry notifications: %s',
-                len(notified_users),
-                ', '.join(notified_users),
-            )
+            with open(PWD_EXPIRYWARN_MAIL_TEMPLATE, 'r', encoding='utf-8') as template_file:
+                smtp_message_tmpl = template_file.read()
+
+            with self.smtp_connection(
+                    SMTP_URL,
+                    local_hostname=SMTP_LOCALHOSTNAME,
+                    ca_certs=SMTP_TLS_CACERTS,
+                    debug_level=SMTP_DEBUGLEVEL,
+                ) as smtp_conn:
+                notified_users = []
+                for user_data in pwd_expire_warning_list:
+                    to_addr = user_data['emailaddr']
+                    smtp_message = smtp_message_tmpl.format(**user_data)
+                    smtp_subject = PWD_EXPIRYWARN_MAIL_SUBJECT.format(**user_data)
+                    self.logger.debug('smtp_subject = %r', smtp_subject)
+                    self.logger.debug('smtp_message = %r', smtp_message)
+                    try:
+                        smtp_conn.send_simple_message(
+                            SMTP_FROM,
+                            [to_addr],
+                            'utf-8',
+                            (
+                                ('From', SMTP_FROM),
+                                ('Date', email.utils.formatdate(time.time(), True)),
+                                ('Subject', smtp_subject),
+                                ('To', to_addr),
+                            ),
+                            smtp_message,
+                        )
+                    except smtplib.SMTPRecipientsRefused as smtp_err:
+                        self.logger.error('Recipient %r rejected: %s', to_addr, smtp_err)
+                        continue
+                    else:
+                        notified_users.append(user_data['user_uid'])
+                self.logger.info(
+                    'Sent %d password expiry notifications: %s',
+                    len(notified_users),
+                    ', '.join(notified_users),
+                )
 
 
 def main():

@@ -91,17 +91,11 @@ class AEDIRWelcomeMailJob(aedir.process.AEProcess):
             ldap0.functions.strf_secs(current_time)
         )
 
-    def _send_welcome_message(self, to_addr, smtp_message_tmpl, msg_attrs):
+    def _send_welcome_message(self, smtp_conn, to_addr, smtp_message_tmpl, msg_attrs):
         """
         Send single welcome message for a user
         """
         self.logger.debug('msg_attrs = %r', msg_attrs)
-        smtp_conn = self._smtp_connection(
-            SMTP_URL,
-            local_hostname=SMTP_LOCALHOSTNAME,
-            ca_certs=SMTP_TLS_CACERTS,
-            debug_level=SMTP_DEBUGLEVEL,
-        )
         smtp_message = smtp_message_tmpl.format(**msg_attrs)
         smtp_subject = NOTIFY_EMAIL_SUBJECT.format(**msg_attrs)
         self.logger.debug('smtp_subject = %r', smtp_subject)
@@ -160,65 +154,72 @@ class AEDIRWelcomeMailJob(aedir.process.AEProcess):
 
         notification_counter = 0
 
-        for ldap_res in ldap_results:
-            to_addr = ldap_res.entry_s['mail'][0]
-            self.logger.debug(
-                'Prepare welcome notification for %r sent to %r',
-                ldap_res.dn_s,
-                to_addr,
-            )
-            smtp_message_tmpl = open(
-                NOTIFY_EMAIL_TEMPLATE, 'rb'
-            ).read().decode('utf-8')
-            msg_attrs = {
-                'ldap_uri': str(self.ldap_conn.ldap_url_obj.connect_uri()),
-                'user_uid': ldap_res.entry_s['uid'][0],
-                'user_cn': ldap_res.entry_s.get('cn', [''])[0],
-                'user_displayname': ldap_res.entry_s.get('displayName', [''])[0],
-                'user_description': ldap_res.entry_s.get('description', [''])[0],
-                'emailadr': to_addr,
-                'fromaddr': SMTP_FROM,
-                'user_dn': ldap_res.dn_s,
-                'web_ctx_host': WEB_CTX_HOST or self.host_fqdn,
-                'app_path_prefix': APP_PATH_PREFIX,
-                'admin_cn': 'unknown',
-                'admin_mail': 'unknown',
-            }
-            admin_dn = ldap_res.entry_s['creatorsName'][0]
-            try:
-                admin_res = self.ldap_conn.read_s(
-                    admin_dn,
-                    filterstr=FILTERSTR_USER,
-                    attrlist=self.admin_attrs,
-                )
-            except (ldap0.NO_SUCH_OBJECT, ldap0.INSUFFICIENT_ACCESS) as ldap_err:
-                self.logger.warning(
-                    'Error reading admin entry %r referenced by %r: %s',
-                    admin_dn,
+        with open(NOTIFY_EMAIL_TEMPLATE, 'r', encoding='utf-8') as tfile:
+            smtp_message_tmpl = tfile.read()
+
+        with self.smtp_connection(
+            SMTP_URL,
+            local_hostname=SMTP_LOCALHOSTNAME,
+            ca_certs=SMTP_TLS_CACERTS,
+            debug_level=SMTP_DEBUGLEVEL,
+        ) as smtp_conn:
+
+            for ldap_res in ldap_results:
+                to_addr = ldap_res.entry_s['mail'][0]
+                self.logger.debug(
+                    'Prepare welcome notification for %r sent to %r',
                     ldap_res.dn_s,
-                    ldap_err,
+                    to_addr,
                 )
-                admin_entry = {}
-            else:
-                if admin_res is None:
+                msg_attrs = {
+                    'ldap_uri': str(self.ldap_conn.ldap_url_obj.connect_uri()),
+                    'user_uid': ldap_res.entry_s['uid'][0],
+                    'user_cn': ldap_res.entry_s.get('cn', [''])[0],
+                    'user_displayname': ldap_res.entry_s.get('displayName', [''])[0],
+                    'user_description': ldap_res.entry_s.get('description', [''])[0],
+                    'emailadr': to_addr,
+                    'fromaddr': SMTP_FROM,
+                    'user_dn': ldap_res.dn_s,
+                    'web_ctx_host': WEB_CTX_HOST or self.host_fqdn,
+                    'app_path_prefix': APP_PATH_PREFIX,
+                    'admin_cn': 'unknown',
+                    'admin_mail': 'unknown',
+                }
+                admin_dn = ldap_res.entry_s['creatorsName'][0]
+                try:
+                    admin_res = self.ldap_conn.read_s(
+                        admin_dn,
+                        filterstr=FILTERSTR_USER,
+                        attrlist=self.admin_attrs,
+                    )
+                except (ldap0.NO_SUCH_OBJECT, ldap0.INSUFFICIENT_ACCESS) as ldap_err:
                     self.logger.warning(
-                        'Empty result reading admin entry %r referenced by %r',
+                        'Error reading admin entry %r referenced by %r: %s',
                         admin_dn,
                         ldap_res.dn_s,
+                        ldap_err,
                     )
+                    admin_entry = {}
                 else:
-                    self.logger.debug(
-                        'Read admin entry %r: %r',
-                        admin_dn,
-                        admin_res.entry_s,
-                    )
-                    if admin_res is not None:
-                        msg_attrs['admin_cn'] = admin_res.entry_s.get('cn', ['unknown'])[0]
-                        msg_attrs['admin_mail'] = admin_res.entry_s.get('mail', ['unknown'])[0]
-            self._send_welcome_message(to_addr, smtp_message_tmpl, msg_attrs)
-            notification_counter += 1
-            if NOTIFY_SUCCESSFUL_MOD:
-                self.ldap_conn.modify_s(ldap_res.dn_s, NOTIFY_SUCCESSFUL_MOD)
+                    if admin_res is None:
+                        self.logger.warning(
+                            'Empty result reading admin entry %r referenced by %r',
+                            admin_dn,
+                            ldap_res.dn_s,
+                        )
+                    else:
+                        self.logger.debug(
+                            'Read admin entry %r: %r',
+                            admin_dn,
+                            admin_res.entry_s,
+                        )
+                        if admin_res is not None:
+                            msg_attrs['admin_cn'] = admin_res.entry_s.get('cn', ['unknown'])[0]
+                            msg_attrs['admin_mail'] = admin_res.entry_s.get('mail', ['unknown'])[0]
+                self._send_welcome_message(smtp_conn, to_addr, smtp_message_tmpl, msg_attrs)
+                notification_counter += 1
+                if NOTIFY_SUCCESSFUL_MOD:
+                    self.ldap_conn.modify_s(ldap_res.dn_s, NOTIFY_SUCCESSFUL_MOD)
 
         if notification_counter:
             self.logger.info('Sent %d welcome notifications', notification_counter)
