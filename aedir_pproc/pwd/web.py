@@ -629,7 +629,7 @@ class ChangePassword(BaseApp):
             self.logger.warning('LDAP error: %s', ldap_err)
             res = RENDER.error('Internal error!')
         else:
-            self.logger.warning('User %r changed own password.', user_dn)
+            self.logger.info('User %r changed own password.', user_dn)
             res = RENDER.changepw_action(
                 self.form.d.username,
                 user_dn,
