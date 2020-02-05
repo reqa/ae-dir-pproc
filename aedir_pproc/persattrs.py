@@ -8,8 +8,6 @@ from aePerson to aeUser entries
 # Imports
 #-----------------------------------------------------------------------
 
-from __future__ import absolute_import
-
 # Modules from Python's standard library
 import sys
 import time

@@ -3,8 +3,6 @@
 aedir_pproc.status - updates aeStatus of expired AE-DIR entries (aeObject)
 """
 
-from __future__ import absolute_import
-
 #-----------------------------------------------------------------------
 # Imports
 #-----------------------------------------------------------------------

@@ -5,8 +5,6 @@ aedir_pproc.groups - Performs two tasks:
 2. Updates all static aeGroup entries which contain attribute 'memberURL'
 """
 
-from __future__ import absolute_import
-
 #-----------------------------------------------------------------------
 # Imports
 #-----------------------------------------------------------------------

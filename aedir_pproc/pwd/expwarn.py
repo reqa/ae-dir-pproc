@@ -3,8 +3,6 @@
 aedir_pproc.pwd.expwarn - send password expiry warnings via e-mail
 """
 
-from __future__ import absolute_import
-
 # from Python's standard lib
 import os
 import smtplib

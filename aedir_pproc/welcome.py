@@ -3,8 +3,6 @@
 aedir_pproc.welcome -- Send welcome e-mail to new users which have not set a password yet
 """
 
-from __future__ import absolute_import
-
 # from Python's standard lib
 import sys
 import os

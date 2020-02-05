@@ -3,8 +3,6 @@
 aedir_pproc.pwd.expreset - Remove expired msPwdResetObject attributes
 """
 
-from __future__ import absolute_import
-
 from ..__about__ import __version__, __author__, __license__
 
 # from Python's standard lib
