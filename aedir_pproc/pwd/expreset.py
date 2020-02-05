@@ -160,6 +160,9 @@ class AEDIRPwdJob(aedir.process.AEProcess):
 
 
 def main():
+    """
+    run the process
+    """
     with AEDIRPwdJob(SERVER_ID) as ae_process:
         ae_process.run(max_runs=1)
 
