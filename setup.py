@@ -34,7 +34,7 @@ setup(
     data_files=[],
     install_requires=[
         'setuptools',
-        'aedir>=0.7.0',
+        'aedir>=0.8.0',
         'mailutil>=0.4.0',
     ],
     zip_safe=False,
