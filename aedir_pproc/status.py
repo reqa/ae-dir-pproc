@@ -7,7 +7,6 @@ aedir_pproc.status - updates aeStatus of expired AE-DIR entries (aeObject)
 # Imports
 #-----------------------------------------------------------------------
 
-import os
 import time
 
 import ldap0
