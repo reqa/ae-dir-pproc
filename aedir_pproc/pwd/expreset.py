@@ -3,47 +3,25 @@
 aedir_pproc.pwd.expreset - Remove expired msPwdResetObject attributes
 """
 
-from ..__about__ import __version__, __author__, __license__
-
 # from Python's standard lib
-import sys
-import os
 import time
-import smtplib
-import email.utils
 from socket import getfqdn
-
-# mailutil is optional dependency of module aedir
-# => provoke first fail here before doing anything else
-import mailutil
 
 # from ldap0 package
 import ldap0
 import ldap0.functions
-
-# the separate mailutil module
-import mailutil
 
 # the separate python-aedir module
 import aedir.process
 
 # Import constants from configuration module
 from aedirpwd_cnf import \
-    APP_PATH_PREFIX, \
     FILTERSTR_EXPIRE, \
-    FILTERSTR_NO_WELCOME_YET, \
-    FILTERSTR_USER, \
-    NOTIFY_EMAIL_SUBJECT, \
-    NOTIFY_EMAIL_TEMPLATE, \
     NOTIFY_OLDEST_TIMESPAN, \
-    NOTIFY_SUCCESSFUL_MOD, \
     PWD_ADMIN_LEN, \
-    SERVER_ID, \
-    SMTP_DEBUGLEVEL, \
-    SMTP_FROM, \
-    SMTP_LOCALHOSTNAME, \
-    SMTP_URL, \
-    WEB_CTX_HOST
+    SERVER_ID
+
+from ..__about__ import __version__, __author__, __license__
 
 #-----------------------------------------------------------------------
 # Classes and functions
@@ -118,7 +96,11 @@ class AEDIRPwdJob(aedir.process.AEProcess):
             ldap_mod_list = [
                 # explictly delete by value
                 (ldap0.MOD_DELETE, b'objectClass', [b'msPwdResetObject']),
-                (ldap0.MOD_DELETE, b'msPwdResetTimestamp', [res.entry_as['msPwdResetTimestamp'][0]]),
+                (
+                    ldap0.MOD_DELETE,
+                    b'msPwdResetTimestamp',
+                    [res.entry_as['msPwdResetTimestamp'][0]]
+                ),
                 (
                     ldap0.MOD_DELETE,
                     b'msPwdResetExpirationTime',
