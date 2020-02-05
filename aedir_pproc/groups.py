@@ -426,6 +426,9 @@ class AEGroupUpdater(aedir.process.AEProcess):
 
 
 def main():
+    """
+    run the process
+    """
     with AEGroupUpdater() as ae_process:
         ae_process.run(max_runs=1)
 

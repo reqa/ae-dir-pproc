@@ -188,6 +188,9 @@ class SyncProcess(aedir.process.TimestampStateMixin, aedir.process.AEProcess):
 
 
 def main():
+    """
+    run the process
+    """
     with SyncProcess(sys.argv[1]) as ae_process:
         ae_process.run(max_runs=1)
 
