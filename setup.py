@@ -36,6 +36,7 @@ setup(
         'setuptools',
         'aedir>=0.8.0',
         'mailutil>=0.4.0',
+        'web.py>=0.40',
     ],
     zip_safe=False,
 )
