@@ -522,7 +522,7 @@ def run():
     local_ldap_uri_obj = LDAPUrl(local_ldap_uri)
     target_ldap_url_obj = LDAPUrl(target_ldap_url)
     # read target password from file
-    with open(target_password_filename, 'rb') as target_password_file:
+    with open(target_password_filename, 'r', encoding='utf-8') as target_password_file:
         target_ldap_url_obj.cred = target_password_file.read()
 
     # initialize password sync consumer thread
