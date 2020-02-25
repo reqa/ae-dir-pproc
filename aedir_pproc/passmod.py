@@ -97,7 +97,7 @@ CONSOLE_LOG_FORMAT = '%(name)s %(asctime)s %(levelname)s %(message)s'
 AVERAGE_COUNT = 100
 
 # Default log level to use
-LOG_LEVEL = int(os.environ.get('LOG_LEVEL', logging.INFO))
+LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO').upper()
 
 # Time (seconds) for assuming an userPassword+OTP value to be valid in cache
 CACHE_TTL = -1.0
@@ -218,14 +218,18 @@ class PWSyncWorker(threading.Thread, LocalLDAPConn):
         self.logger.debug('Check password of %r', user_dn)
         ldapi_conn = self.get_ldapi_conn()
         try:
-            user_entry = ldap0.cidict.CIDict(
-                ldapi_conn.read_s(user_dn, attrlist=['userPassword']) or {}
+            user_entry = ldapi_conn.read_s(
+                user_dn,
+                attrlist=['userPassword']
             )
         except ldap0.LDAPError as ldap_error:
             self.logger.warning('LDAPError checking password of %r: %s', user_dn, ldap_error)
             return False
+        if not user_entry:
+            self.logger.warning('No search result reading %r', user_dn)
+            return False
         try:
-            user_password_hash = user_entry['userPassword'][0][7:]
+            user_password_hash = ldap0.cidict.CIDict(user_entry.entry_as)['userPassword'][0][7:]
         except (KeyError, IndexError):
             self.logger.warning('No userPassword in %r', user_dn)
             return False
@@ -240,7 +244,8 @@ class PWSyncWorker(threading.Thread, LocalLDAPConn):
         """
         determine target identifier based on user's source DN
         """
-        rdn_attr_type, uid = list(DNObj(source_dn).rdn_attrs().items)[0]
+        self.logger.debug('Determine target ID for %r', source_dn)
+        rdn_attr_type, uid = list(DNObj.from_str(source_dn).rdn_attrs().items())[0]
         if rdn_attr_type.lower() != self.source_id_attr:
             # check accepted attribute in RDN
             self.logger.warning(
