@@ -32,6 +32,7 @@ from ldap0.functions import strf_secs as ldap_strf_secs
 from ldap0.ldapurl import LDAPUrl
 from ldap0.lock import LDAPLock
 from ldap0.pw import unicode_pwd
+from ldap0.ldapobject import ReconnectLDAPObject
 
 # from pyasn1
 from pyasn1.type.univ import OctetString, Sequence
@@ -175,7 +176,7 @@ class PWSyncWorker(threading.Thread, LocalLDAPConn):
         """
         open and cache target connection
         """
-        if isinstance(self._target_conn, MyLDAPObject):
+        if isinstance(self._target_conn, ReconnectLDAPObject):
             self.logger.debug(
                 'Existing LDAP connection to %s (%s)',
                 repr(self._target_conn.uri),
@@ -183,36 +184,44 @@ class PWSyncWorker(threading.Thread, LocalLDAPConn):
             )
             return self._target_conn
         try:
+            self.logger.debug(
+                'Open connection to %r as %r',
+                self._target_ldap_url.connect_uri(),
+                self._target_ldap_url.who,
+            )
             self._target_conn_lock.acquire()
             try:
-                self._target_conn = MyLDAPObject(
+                self._target_conn = ReconnectLDAPObject(
                     self._target_ldap_url.connect_uri(),
                     trace_level=LDAP0_TRACE_LEVEL,
                     cache_ttl=LDAP_CACHE_TTL,
                     retry_max=LDAP_MAXRETRYCOUNT,
                     retry_delay=LDAP_RETRYDELAY,
-                    who=self._target_ldap_url.who or '',
-                    cred=self._target_ldap_url.cred or '',
+                )
+                self._target_conn.simple_bind_s(
+                    self._target_ldap_url.who or '',
+                    (self._target_ldap_url.cred or '').encode('utf-8'),
                 )
             except ldap0.LDAPError as ldap_error:
                 self._target_conn = None
                 self.logger.error(
-                    'LDAPError during connecting to %s: %s',
-                    repr(self.ldapi_uri),
-                    str(ldap_error),
+                    'LDAPError during connecting to %r: %s',
+                    self.ldapi_uri,
+                    ldap_error,
                 )
                 raise ldap_error
             else:
                 self._target_conn.authz_id = self._target_conn.whoami_s()
                 self.logger.info(
                     'Successfully bound to %s as %s (%s)',
-                    repr(self.ldapi_uri),
-                    repr(self._target_conn.authz_id),
-                    repr(self._target_conn),
+                    self.ldapi_uri,
+                    self._target_conn.authz_id,
+                    self._target_conn,
                 )
         finally:
             self._target_conn_lock.release()
-        return self._target_conn # target_conn()
+        return self._target_conn
+        # end of target_conn()
 
     def _check_password(self, user_dn, new_passwd):
         self.logger.debug('Check password of %r', user_dn)
@@ -256,8 +265,9 @@ class PWSyncWorker(threading.Thread, LocalLDAPConn):
             )
             return None
         self.logger.debug('Extracted %s=%r from source_dn=%r', self.source_id_attr, uid, source_dn)
-        target_conn = self.target_conn()
         target_filter = self.target_filter_format.format(self.target_id_attr, uid)
+        self.logger.debug('Searching target entry with %r', target_filter)
+        target_conn = self.target_conn()
         ldap_result = target_conn.search_s(
             self._target_ldap_url.dn,
             self._target_ldap_url.scope or ldap0.SCOPE_SUBTREE,
@@ -277,7 +287,7 @@ class PWSyncWorker(threading.Thread, LocalLDAPConn):
         return ldap_result[0].dn_s
         # end of PWSyncWorker.get_target_id()
 
-    def encode_target_password(self, password):
+    def _encode_target_password(self, password):
         """
         encode argument password for target system
         """
@@ -287,7 +297,7 @@ class PWSyncWorker(threading.Thread, LocalLDAPConn):
             result = password.decode('utf-8').encode(self.target_password_encoding)
         return result
 
-    def update_target_password(self, target_id, old_passwd, new_passwd, req_time):
+    def _update_target_password(self, target_id, old_passwd, new_passwd, req_time):
         """
         write new password to target
         """
@@ -297,10 +307,10 @@ class PWSyncWorker(threading.Thread, LocalLDAPConn):
             [(
                 ldap0.MOD_REPLACE,
                 self.target_password_attr.encode('ascii'),
-                [self.encode_target_password(new_passwd)],
+                [self._encode_target_password(new_passwd)],
             )]
         )
-        # end of PWSyncWorker.update_target_password()
+        # end of PWSyncWorker._update_target_password()
 
     def run(self):
         """
@@ -338,7 +348,7 @@ class PWSyncWorker(threading.Thread, LocalLDAPConn):
                     )
                     continue
                 self.logger.debug('Try to sync password for %r to %r', user_dn, target_id)
-                self.update_target_password(target_id, old_passwd, new_passwd, req_time)
+                self._update_target_password(target_id, old_passwd, new_passwd, req_time)
             except Exception:
                 self.logger.error(
                     'Error syncing password for %r:\n',
