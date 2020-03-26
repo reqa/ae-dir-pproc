@@ -538,6 +538,20 @@ def run():
         my_logger.error('%s  => abort', err)
         sys.exit(1)
 
+    cacert_filename = ldap0.get_option(ldap0.OPT_X_TLS_CACERTFILE)
+    if not cacert_filename:
+        my_logger.error('No CA certificate file defined => abort')
+        sys.exit(1)
+
+    try:
+        with open(cacert_filename, 'r') as cacert_file:
+            cacert = cacert_file.read()
+    except IOError as err:
+        my_logger.error('Error reading CA cert file %r: %s => abort', cacert_filename, err)
+        sys.exit(1)
+    else:
+        my_logger.debug('Using CA cert file %r (%d bytes)', cacert_filename, len(cacert))
+
     # read target password from file
     with open(target_password_filename, 'r', encoding='utf-8') as target_password_file:
         target_ldap_url_obj.cred = target_password_file.read()
