@@ -531,8 +531,13 @@ def run():
         my_logger.error('Not enough arguments => abort')
         sys.exit(1)
 
-    local_ldap_uri_obj = LDAPUrl(local_ldap_uri)
-    target_ldap_url_obj = LDAPUrl(target_ldap_url)
+    try:
+        local_ldap_uri_obj = LDAPUrl(local_ldap_uri)
+        target_ldap_url_obj = LDAPUrl(target_ldap_url)
+    except ValueError as err:
+        my_logger.error('%s  => abort', err)
+        sys.exit(1)
+
     # read target password from file
     with open(target_password_filename, 'r', encoding='utf-8') as target_password_file:
         target_ldap_url_obj.cred = target_password_file.read()
