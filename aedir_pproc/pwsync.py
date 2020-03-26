@@ -553,8 +553,14 @@ def run():
         my_logger.debug('Using CA cert file %r (%d bytes)', cacert_filename, len(cacert))
 
     # read target password from file
-    with open(target_password_filename, 'r', encoding='utf-8') as target_password_file:
-        target_ldap_url_obj.cred = target_password_file.read()
+    try:
+        with open(target_password_filename, 'r', encoding='utf-8') as target_password_file:
+            target_ldap_url_obj.cred = target_password_file.read()
+    except IOError as err:
+        my_logger.error('Error reading target password file %r: %s => abort', target_password_filename, err)
+        sys.exit(1)
+    else:
+        my_logger.debug('Using target password file %r', target_password_filename)
 
     # initialize password sync consumer thread
     pwsync_worker = PWSyncWorker(
