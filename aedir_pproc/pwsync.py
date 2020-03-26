@@ -292,10 +292,8 @@ class PWSyncWorker(threading.Thread, LocalLDAPConn):
         encode argument password for target system
         """
         if self.target_password_attr.lower() == 'unicodepwd':
-            result = unicode_pwd(password)
-        else:
-            result = password.decode('utf-8').encode(self.target_password_encoding)
-        return result
+            return unicode_pwd(password.encode('utf-8'))
+        return password.encode(self.target_password_encoding)
 
     def _update_target_password(self, target_id, old_passwd, new_passwd, req_time):
         """
