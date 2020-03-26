@@ -213,10 +213,9 @@ class PWSyncWorker(threading.Thread, LocalLDAPConn):
             else:
                 self._target_conn.authz_id = self._target_conn.whoami_s()
                 self.logger.info(
-                    'Successfully bound to %s as %s (%s)',
-                    self.ldapi_uri,
+                    'Successfully bound to %s as %s',
+                    self._target_conn.uri,
                     self._target_conn.authz_id,
-                    self._target_conn,
                 )
         finally:
             self._target_conn_lock.release()
