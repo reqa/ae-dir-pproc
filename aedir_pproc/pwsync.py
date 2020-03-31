@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-slapd-sock listener demon queried by OpenLDAP's slapd-sock
+aedir_pproc.pwsync - slapd-sock listener for password synchronisation
 
-this demon intercepts password changes in ADD and MODIFY operations
-and exports the userPassword value
+This demon intercepts password changes (Password modify extended operation)
+and sends the clear-text password to e.g. MS AD
 """
 
 #-----------------------------------------------------------------------
