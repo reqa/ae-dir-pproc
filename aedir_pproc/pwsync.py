@@ -22,6 +22,13 @@ from collections import OrderedDict
 # passlib
 import passlib.context
 
+# from pyasn1
+from pyasn1.type.univ import OctetString, Sequence
+from pyasn1.type.namedtype import NamedTypes, OptionalNamedType
+from pyasn1.type.tag import Tag, tagClassContext, tagFormatSimple
+from pyasn1.codec.ber import decoder as pyasn1_decoder
+from pyasn1.error import PyAsn1Error
+
 # from ldap0 package
 import ldap0
 from ldap0.res import SearchResultEntry
@@ -32,15 +39,8 @@ from ldap0.lock import LDAPLock
 from ldap0.pw import unicode_pwd
 from ldap0.ldapobject import ReconnectLDAPObject
 
-# from pyasn1
-from pyasn1.type.univ import OctetString, Sequence
-from pyasn1.type.namedtype import NamedTypes, OptionalNamedType
-from pyasn1.type.tag import Tag, tagClassContext, tagFormatSimple
-from pyasn1.codec.ber import decoder as pyasn1_decoder
-from pyasn1.error import PyAsn1Error
-
 # local modules
-from slapdsock.ldaphelper import MyLDAPObject, LocalLDAPConn
+from slapdsock.ldaphelper import LocalLDAPConn
 from slapdsock.loghelper import combined_logger
 from slapdsock.handler import SlapdSockHandler
 from slapdsock.service import SlapdSockThreadingServer
@@ -555,7 +555,11 @@ def run():
         with open(target_password_filename, 'r', encoding='utf-8') as target_password_file:
             target_ldap_url_obj.cred = target_password_file.read()
     except IOError as err:
-        my_logger.error('Error reading target password file %r: %s => abort', target_password_filename, err)
+        my_logger.error(
+            'Error reading target password file %r: %s => abort',
+            target_password_filename,
+            err
+        )
         sys.exit(1)
     else:
         my_logger.debug('Using target password file %r', target_password_filename)
