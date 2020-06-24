@@ -297,6 +297,7 @@ class Default:
         handle GET request by returning default entry page
         """
         return RENDER.default()
+        # end of Default.GET()
 
 
 class BaseApp(Default):
@@ -358,7 +359,7 @@ class BaseApp(Default):
             (user.dn_s, user.entry_s),
         )
         return user.dn_s, user.entry_s
-        # end of search_user_entry()
+        # end of BaseApp.search_user_entry()
 
     def _open_ldap_conn(self):
         """
@@ -378,7 +379,7 @@ class BaseApp(Default):
             self.ldap_conn.ldap_url_obj.connect_uri(),
             self.ldap_conn.whoami_s(),
         )
-        # end of _open_ldap_conn()
+        # end of BaseApp._open_ldap_conn()
 
     def _close_ldap_conn(self):
         """
@@ -396,7 +397,7 @@ class BaseApp(Default):
                 self.ldap_conn.ldap_url_obj.connect_uri(),
                 ldap_err,
             )
-        # end of _close_ldap_conn()
+        # end of BaseApp._close_ldap_conn()
 
     def handle_user_request(self, user_dn, user_entry):
         """
@@ -433,6 +434,7 @@ class BaseApp(Default):
             res = self.handle_user_request(user_dn, user_entry)
         self._close_ldap_conn()
         return res
+        # end of BaseApp.POST()
 
 
 class CheckPassword(BaseApp):
@@ -567,6 +569,7 @@ class ChangePassword(BaseApp):
             return RENDER.changepw_form('', 'Invalid input')
         else:
             return RENDER.changepw_form(get_input.username, '')
+        # end of ChangePassword.GET()
 
     def _check_pw_input(self, user_entry):
         if self.form.d.newpassword1 != self.form.d.newpassword2:
@@ -590,7 +593,7 @@ class ChangePassword(BaseApp):
                     next_pwd_change_timespan
                 )
         return None
-        # end of _check_pw_input()
+        # end of ChangePassword._check_pw_input()
 
     def handle_user_request(self, user_dn, user_entry):
         """
@@ -636,6 +639,7 @@ class ChangePassword(BaseApp):
                 self.ldap_conn.ldap_url_obj.connect_uri()
             )
         return res
+        # end of ChangePassword.handle_user_request()
 
 
 class RequestPasswordReset(BaseApp):
@@ -668,6 +672,7 @@ class RequestPasswordReset(BaseApp):
             return RENDER.requestpw_form('', 'Invalid input')
         else:
             return RENDER.requestpw_form(get_input.username, '')
+        # end of RequestPasswordReset.GET()
 
     def _get_admin_mailaddrs(self, user_dn):
         try:
@@ -684,6 +689,7 @@ class RequestPasswordReset(BaseApp):
                 for res in ldap_results or []
             ]
         return sorted(set(admin_addrs or PWD_ADMIN_MAILTO))
+        # end of RequestPasswordReset._get_admin_mailaddrs()
 
     def _send_pw(self, username, user_dn, user_entry, temp_pwd_clear):
         """
@@ -763,7 +769,7 @@ class RequestPasswordReset(BaseApp):
         )
         self.logger.info('Sent reset password to %s', to_addr)
         smtp_conn.quit()
-        # end of _send_pw()
+        # end of RequestPasswordReset._send_pw()
 
     def handle_user_request(self, user_dn, user_entry):
         """
@@ -852,6 +858,7 @@ class RequestPasswordReset(BaseApp):
                     user_dn
                 )
         return res
+        # end of .handle_user_request()
 
 
 class FinishPasswordReset(ChangePassword):
@@ -902,7 +909,8 @@ class FinishPasswordReset(ChangePassword):
             pwd_admin_len,
             get_input.temppassword1,
             ''
-        ) # end of FinishPasswordReset.GET()
+        )
+        # end of FinishPasswordReset.GET()
 
     def _ldap_user_operations(self, user_dn, user_entry, temp_pwd_hash, new_password_ldap):
         pwd_admin_len = int(user_entry.get('msPwdResetAdminPwLen', [str(PWD_ADMIN_LEN)])[0])
@@ -947,7 +955,7 @@ class FinishPasswordReset(ChangePassword):
                 ldap_err,
             )
             raise
-        # end of _ldap_user_operations()
+        # end of FinishPasswordReset._ldap_user_operations()
 
     def handle_user_request(self, user_dn, user_entry):
         """
@@ -1002,6 +1010,7 @@ class FinishPasswordReset(ChangePassword):
             self.logger.info('Password reset completed for %r.', user_dn)
             res = RENDER.resetpw_action(self.form.d.username, user_dn)
         return res
+        # end of FinishPasswordReset.handle_user_request()
 
 
 application = web.application(URL2CLASS_MAPPING, globals(), autoreload=bool(WEB_ERROR)).wsgifunc()
@@ -1028,6 +1037,7 @@ def main():
         sys.argv[1],
     )
     app.run()
+    # end of main()
 
 
 if __name__ == '__main__':
