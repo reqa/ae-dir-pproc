@@ -1127,10 +1127,11 @@ class ViewUser(BaseApp):
         else:
             self.logger.debug('Show user %r (%r) to %r.', self.form.d.othername, other.dn_s, self.form.d.username)
             res = RENDER.viewuser_action(
-                self.form.d.othername,
                 other.entry_s['displayName'][0],
+                'msPwdResetObject' in other.entry_s['objectClass'],
                 other.entry_s.get('msPwdResetAdminPw', [None])[0],
                 other.entry_s.get('msPwdResetExpirationTime', [None])[0],
+                {at: avs[0] for at, avs in other.entry_s.items()},
             )
         return res
         # end of ViewUser.handle_user_request()
