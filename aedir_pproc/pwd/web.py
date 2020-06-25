@@ -21,7 +21,7 @@ import web
 # from ldap0 package
 import ldap0
 import ldap0.functions
-import ldap0.filter
+from ldap0.filter import escape_str as escape_filter
 from ldap0.err import PasswordPolicyException, PasswordPolicyExpirationWarning
 from ldap0.controls.ppolicy import PasswordPolicyControl
 from ldap0.controls.sessiontrack import SessionTrackingControl
@@ -64,6 +64,13 @@ PWDPOLICY_EXPIRY_ATTRS = [
     'pwdExpireWarning',
 ]
 
+MSPWDRESET_ATTRS = [
+    'msPwdResetAdminPw',
+    'msPwdResetEnabled',
+    'msPwdResetExpirationTime',
+    'msPwdResetTimestamp',
+]
+
 MSPWDRESETPOLICY_ATTRS = [
     'msPwdResetAdminPwLen',
     'msPwdResetEnabled',
@@ -86,22 +93,35 @@ PWDPOLICY_DEREF_CONTROL = DereferenceControl(
 )
 
 AEPERSON_ATTRS = [
-    'cn',
-    'mail',
-    'telephoneNumber',
-    'mobile',
     'aeDept',
     'aeLocation',
-    'ou',
+    'cn',
     'departmentNumber',
+    'l',
+    'mobile',
     'o',
+    'ou',
+    'street',
+    'telephoneNumber',
 ]
 
 # request control for dereferencing aePerson entry's attributes
-AEPERSON_DEREF_CONTROL = DereferenceControl(True, {'aePerson':AEPERSON_ATTRS})
+VIEWUSER_DEREF_CONTROL = DereferenceControl(
+    True,
+    {
+        'aePerson': AEPERSON_ATTRS,
+        'pwdPolicySubentry': [
+            'pwdAllowUserChange',
+            'pwdAttribute',
+            'pwdMinAge',
+            'pwdMinLength',
+        ]+PWDPOLICY_EXPIRY_ATTRS+MSPWDRESETPOLICY_ATTRS,
+    },
+)
 
 # initialize a custom logger
 APP_LOGGER = aedir.init_logger(log_name='ae-dir-pwd')
+APP_LOGGER.setLevel(os.environ.get('LOG_LEVEL', 'INFO').upper())
 
 # Mapping of request URL path to Python handler class
 URL2CLASS_MAPPING = (
@@ -110,6 +130,7 @@ URL2CLASS_MAPPING = (
     '/changepw', 'ChangePassword',
     '/requestpw', 'RequestPasswordReset',
     '/resetpw', 'FinishPasswordReset',
+    '/viewuser', 'ViewUser',
 )
 
 #-----------------------------------------------------------------------
@@ -178,10 +199,10 @@ EMAIL_FIELD = web.form.Textbox(
 
 # Declaration for text input field for old password
 USERPASSWORD_FIELD = web.form.Password(
-    'oldpassword',
+    'password',
     web.form.notnull,
     web.form.regexp('^.*$', ''),
-    description='Old password'
+    description='User password'
 )
 
 TEMP1PASSWORD_FIELD = web.form.Password(
@@ -223,17 +244,11 @@ NEWPASSWORD2_FIELD = web.form.Password(
 )
 
 # Declarations for admin login
-ADMINNAME_FIELD = web.form.Textbox(
-    'adminname',
+OTHERNAME_FIELD = web.form.Textbox(
+    'othername',
     web.form.notnull,
-    web.form.regexp('^[a-zA-Z0-9._-]+$', 'Invalid admin user name.'),
-    description='Admin user name'
-)
-ADMINPASSWORD_FIELD = web.form.Password(
-    'adminpassword',
-    web.form.notnull,
-    web.form.regexp('^.*$', ''),
-    description='Old password'
+    web.form.regexp('^[a-zA-Z0-9._-]+$', 'Invalid view user name.'),
+    description='View user name'
 )
 
 
@@ -353,10 +368,10 @@ class BaseApp(Default):
         Search a user entry for the user specified by username
         """
         filterstr_inputs_dict = {
-            'currenttime': ldap0.filter.escape_str(ldap0.functions.strf_secs(time.time())),
+            'currenttime': escape_filter(ldap0.functions.strf_secs(time.time())),
         }
         for key, value in inputs.items():
-            filterstr_inputs_dict[key] = ldap0.filter.escape_str(value)
+            filterstr_inputs_dict[key] = escape_filter(value)
         filterstr = (
             self.filterstr_template.format(**filterstr_inputs_dict)
         )
@@ -370,7 +385,7 @@ class BaseApp(Default):
                 self.ldap_conn.ldap_url_obj.dn,
                 ldap0.SCOPE_SUBTREE,
                 filterstr=filterstr,
-                attrlist=USER_ATTRS,
+                attrlist=USER_ATTRS+MSPWDRESET_ATTRS,
                 req_ctrls=[PWDPOLICY_DEREF_CONTROL],
             )
         except ldap0.LDAPError as ldap_err:
@@ -383,10 +398,7 @@ class BaseApp(Default):
             user.entry_b.update(
                 user.ctrls[0].derefRes['pwdPolicySubentry'][0].entry_b
             )
-        self.logger.debug(
-            '.search_user_entry() returns %r',
-            (user.dn_s, user.entry_s),
-        )
+        self.logger.debug('.search_user_entry() returns %r', user.dn_s, user.entry_s)
         return user.dn_s, user.entry_s
         # end of BaseApp.search_user_entry()
 
@@ -501,7 +513,7 @@ class CheckPassword(BaseApp):
         try:
             self.ldap_conn.simple_bind_s(
                 user_dn,
-                self.form.d.oldpassword.encode('utf-8'),
+                self.form.d.password.encode('utf-8'),
                 req_ctrls=[
                     PasswordPolicyControl(),
                     self._sess_track_ctrl(),
@@ -634,7 +646,7 @@ class ChangePassword(BaseApp):
         try:
             self.ldap_conn.simple_bind_s(
                 user_dn,
-                self.form.d.oldpassword.encode('utf-8'),
+                self.form.d.password.encode('utf-8'),
                 req_ctrls=[self._sess_track_ctrl()],
             )
             self.ldap_conn.passwd_s(
@@ -1051,9 +1063,9 @@ class ViewUser(BaseApp):
     filterstr_template = FILTERSTR_CHANGEPW
 
     post_form = web.form.Form(
-        ADMINNAME_FIELD,
-        ADMINPASSWORD_FIELD,
         USERNAME_FIELD,
+        USERPASSWORD_FIELD,
+        OTHERNAME_FIELD,
         web.form.Button(
             'submit',
             type='submit',
@@ -1067,65 +1079,58 @@ class ViewUser(BaseApp):
         with username pre-filled
         """
         try:
-            get_input = web.input(adminname='', username='')
+            get_input = web.input(username='', othername='')
         except UnicodeError as err:
             self.logger.warning('Invalid input: %s', err)
-            return RENDER.viewreset_form('', 'Invalid input')
-        else:
-            return RENDER.viewreset_form(get_input.username, '')
+            return RENDER.viewuser_form('', '', 'Invalid input')
+        return RENDER.viewuser_form(get_input.username, get_input.othername, '')
         # end of ViewUser.GET()
 
     def handle_user_request(self, user_dn, user_entry):
         """
         set new password
         """
-        pw_input_check_msg = self._check_pw_input(user_entry)
-        if not pw_input_check_msg is None:
-            return RENDER.viewreset_form(self.form.d.username, pw_input_check_msg)
         try:
             self.ldap_conn.simple_bind_s(
                 user_dn,
-                self.form.d.oldpassword.encode('utf-8'),
+                self.form.d.password.encode('utf-8'),
                 req_ctrls=[self._sess_track_ctrl()],
             )
             # TODO: really search the reset user and display stuff
-            try:
-                user = self.ldap_conn.find_unique_entry(
-                    self.ldap_conn.ldap_url_obj.dn,
-                    ldap0.SCOPE_SUBTREE,
-                    filterstr=filterstr,
-                    attrlist=USER_ATTRS,
-                    req_ctrls=[AEPERSON_DEREF_CONTROL, self._sess_track_ctrl(),],
+            other = self.ldap_conn.find_unique_entry(
+                self.ldap_conn.ldap_url_obj.dn,
+                ldap0.SCOPE_SUBTREE,
+                filterstr=FILTERSTR_CHANGEPW.format(
+                    username=escape_filter(self.form.d.othername),
+                ),
+                attrlist=USER_ATTRS+MSPWDRESET_ATTRS,
+                req_ctrls=[VIEWUSER_DEREF_CONTROL, self._sess_track_ctrl(),],
+            )
+            if other.ctrls:
+                other.entry_b.update(
+                    other.ctrls[0].derefRes['aePerson'][0].entry_b
                 )
-            except ldap0.LDAPError as ldap_err:
-                self.logger.warning(
-                    '.handle_user_request() search failed: %s',
-                    ldap_err,
+                other.entry_b.update(
+                    other.ctrls[0].derefRes['pwdPolicySubentry'][0].entry_b
                 )
-                raise
+            self.logger.debug('Found %r: %r', other.dn_s, other.entry_s)
         except ldap0.INVALID_CREDENTIALS as ldap_err:
             self.logger.warning('Password of %r wrong: %s', user_dn, ldap_err)
-            res = RENDER.viewreset_form(
+            res = RENDER.viewuser_form(
                 self.form.d.username,
-                'Password wrong!',
-            )
-        except ldap0.CONSTRAINT_VIOLATION as ldap_err:
-            self.logger.warning('Changing password of %r failed: %s', user_dn, ldap_err)
-            res = RENDER.viewreset_form(
-                self.form.d.username,
-                'Password rules violation: {0}'.format(
-                    ldap_err.args[0]['info'].decode('utf-8'),
-                ),
+                self.form.d.othername,
+                'Admin password wrong!',
             )
         except ldap0.LDAPError as ldap_err:
             self.logger.warning('LDAP error: %s', ldap_err)
             res = RENDER.error('Internal error!')
         else:
-            self.logger.info('User %r changed own password.', user_dn)
-            res = RENDER.viewreset_action(
-                self.form.d.username,
-                user_dn,
-                self.ldap_conn.ldap_url_obj.connect_uri()
+            self.logger.debug('Show user %r (%r) to %r.', self.form.d.othername, other.dn_s, self.form.d.username)
+            res = RENDER.viewuser_action(
+                self.form.d.othername,
+                other.entry_s['displayName'][0],
+                other.entry_s.get('msPwdResetAdminPw', [None])[0],
+                other.entry_s.get('msPwdResetExpirationTime', [None])[0],
             )
         return res
         # end of ViewUser.handle_user_request()
