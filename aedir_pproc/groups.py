@@ -248,7 +248,7 @@ class AEGroupUpdater(aedir.process.AEProcess):
         """
         2. remove all members from archived groups
         """
-        non_empty_archived_groups = self.ldap_conn.search_s(
+        msg_id = self.ldap_conn.search(
             self.ldap_conn.search_base,
             ldap0.SCOPE_SUBTREE,
             '(&(objectClass=aeGroup)(aeStatus=2)({0}=*))'.format(MEMBER_ATTR),
@@ -258,27 +258,29 @@ class AEGroupUpdater(aedir.process.AEProcess):
             ]+MEMBER_ATTRS,
             attrsonly=True,
         )
-        for group_dn, group_entry in non_empty_archived_groups:
-            mod_list = [
-                (ldap0.MOD_DELETE, attr, None)
-                for attr in [MEMBER_ATTR] + MEMBER_ATTRS
-                if attr in group_entry
-            ]
-            try:
-                self.ldap_conn.modify_s(group_dn, mod_list)
-            except ldap0.LDAPError as ldap_error:
-                self.logger.error(
-                    u'LDAPError modifying %r: %s mod_list = %r',
-                    group_dn,
-                    ldap_error,
-                    mod_list,
-                )
-            else:
-                self.logger.info(
-                    u'Removed all member attributes from %r: mod_list = %r',
-                    group_dn,
-                    mod_list,
-                )
+        for ldap_results in self.ldap_conn.results(msg_id):
+            for group in ldap_results.rdata:
+                self.logger.debug('Archived group with members: %r', group.dn_s)
+                mod_list = [
+                    (ldap0.MOD_DELETE, attr.encode('ascii'), None)
+                    for attr in [MEMBER_ATTR] + MEMBER_ATTRS
+                    if attr in group.entry_s
+                ]
+                try:
+                    self.ldap_conn.modify_s(group.dn_s, mod_list)
+                except ldap0.LDAPError as ldap_error:
+                    self.logger.error(
+                        u'LDAPError modifying %r: %s mod_list = %r',
+                        group.dn_s,
+                        ldap_error,
+                        mod_list,
+                    )
+                else:
+                    self.logger.info(
+                        u'Removed all member attributes from %r: mod_list = %r',
+                        group.dn_s,
+                        mod_list,
+                    )
         # end of empty_archived_groups()
 
     def update_memberurl_groups(self):
