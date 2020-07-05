@@ -139,7 +139,7 @@ class AEGroupUpdater(aedir.process.AEProcess):
                 )
         else:
             self.logger.debug(u'Nothing to be done with %r', group_dn)
-        return # end of _update_members()
+        # end of _update_members()
 
     def fix_static_groups(self):
         """
@@ -209,7 +209,7 @@ class AEGroupUpdater(aedir.process.AEProcess):
                         new_member_attr_values
                     )
 
-        return # end of fix_static_groups()
+        # end of fix_static_groups()
 
     def _constrained_persons(self, aegroup_entry):
         """
@@ -424,7 +424,7 @@ class AEGroupUpdater(aedir.process.AEProcess):
         self.update_memberurl_groups()
         self.logger.debug('invoke fix_static_groups()')
         self.fix_static_groups()
-        return # end of run_worker()
+        # end of run_worker()
 
 
 def main():
