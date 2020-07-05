@@ -16,6 +16,21 @@ import aedir.process
 from .__about__ import __version__, __author__, __license__
 
 #-----------------------------------------------------------------------
+# Constants
+#-----------------------------------------------------------------------
+
+EXPIRY_FILTER_TMPL = (
+    '(&'
+        '(objectClass=aeObject)'
+        '(aeNotAfter<={now})'
+        '(|'
+            '(&(aeStatus<=0)(aeExpiryStatus>=1))'
+            '(&(aeStatus<=1)(aeExpiryStatus>=2))'
+        ')'
+    ')'
+)
+
+#-----------------------------------------------------------------------
 # Classes and functions
 #-----------------------------------------------------------------------
 
@@ -41,22 +56,13 @@ class AEStatusUpdater(aedir.process.AEProcess):
         if self.error_counter:
             self.logger.error('%d errors.', self.error_counter)
 
-    def run_worker(self, state):
+    def _update_status(self):
         """
-        the main program
+        run aeStatus updates
         """
         current_time_str = ldap0.functions.strf_secs(time.time())
         self.logger.debug('current_time_str = %r', current_time_str)
-        expiry_filter = (
-          '(&'
-            '(objectClass=aeObject)'
-            '(aeNotAfter<={0})'
-            '(|'
-              '(&(aeStatus<=0)(aeExpiryStatus>=1))'
-              '(&(aeStatus<=1)(aeExpiryStatus>=2))'
-            ')'
-          ')'
-        ).format(current_time_str)
+        expiry_filter = EXPIRY_FILTER_TMPL.format(now=current_time_str)
         self.logger.debug('expiry_filter = %r', expiry_filter)
         try:
             msg_id = self.ldap_conn.search(
@@ -90,7 +96,13 @@ class AEStatusUpdater(aedir.process.AEProcess):
                 else:
                     self.logger.info('Updated aeStatus in %r: %s', aeobj.dn_s, modlist)
                     self.modify_counter += 1
-        return # end of run_worker()
+        # end of _update_status()
+
+    def run_worker(self, state):
+        """
+        the main program
+        """
+        self._update_status()
 
 
 def main():
