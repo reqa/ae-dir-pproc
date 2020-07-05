@@ -425,15 +425,3 @@ class AEGroupUpdater(aedir.process.AEProcess):
         self.logger.debug('invoke fix_static_groups()')
         self.fix_static_groups()
         # end of run_worker()
-
-
-def main():
-    """
-    run the process
-    """
-    with AEGroupUpdater() as ae_process:
-        ae_process.run(max_runs=1)
-
-
-if __name__ == '__main__':
-    main()

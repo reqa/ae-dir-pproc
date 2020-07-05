@@ -23,6 +23,7 @@ import aedir
 import aedir.process
 
 from .__about__ import __version__, __author__, __license__
+from .groups import AEGroupUpdater
 
 #-----------------------------------------------------------------------
 # Constants (configuration)
@@ -37,7 +38,7 @@ AEDIR_AEPERSON_ATTRS = [
     'aeStatus'
 ]
 
-EXPIRY_FILTER_TMPL = (
+AEOBJECT_EXPIRY_FILTER_TMPL = (
     '(&'
         '(objectClass=aeObject)'
         '(aeNotAfter<={now})'
@@ -56,7 +57,7 @@ aedir.process.CatchAllException = Exception
 #-----------------------------------------------------------------------
 
 
-class SyncProcess(aedir.process.TimestampStateMixin, aedir.process.AEProcess):
+class AEObjectUpdater(aedir.process.TimestampStateMixin, aedir.process.AEProcess):
     """
     The sync process
     """
@@ -93,7 +94,7 @@ class SyncProcess(aedir.process.TimestampStateMixin, aedir.process.AEProcess):
         """
         run aeStatus updates
         """
-        expiry_filter = EXPIRY_FILTER_TMPL.format(now=current_time_str)
+        expiry_filter = AEOBJECT_EXPIRY_FILTER_TMPL.format(now=current_time_str)
         self.logger.debug('expiry_filter = %r', expiry_filter)
         try:
             msg_id = self.ldap_conn.search(
@@ -246,7 +247,9 @@ def main():
     """
     run the process
     """
-    with SyncProcess(sys.argv[1]) as ae_process:
+    with AEObjectUpdater(sys.argv[1]) as ae_process:
+        ae_process.run(max_runs=1)
+    with AEGroupUpdater() as ae_process:
         ae_process.run(max_runs=1)
 
 
