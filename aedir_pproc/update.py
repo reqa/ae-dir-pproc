@@ -37,6 +37,17 @@ AEDIR_AEPERSON_ATTRS = [
     'aeStatus'
 ]
 
+EXPIRY_FILTER_TMPL = (
+    '(&'
+        '(objectClass=aeObject)'
+        '(aeNotAfter<={now})'
+        '(|'
+            '(&(aeStatus<=0)(aeExpiryStatus>=1))'
+            '(&(aeStatus<=1)(aeExpiryStatus>=2))'
+        ')'
+    ')'
+)
+
 # Exception class used for catching all exceptions
 aedir.process.CatchAllException = Exception
 
@@ -54,10 +65,12 @@ class SyncProcess(aedir.process.TimestampStateMixin, aedir.process.AEProcess):
     def __init__(self, state_filename):
         aedir.process.AEProcess.__init__(self)
         self.state_filename = state_filename
+        self.aeobject_counter = 0
         self.aeperson_counter = 0
-        self.modify_counter = 0
-        self.error_counter = 0
         self.deactivate_counter = 0
+        self.error_counter = 0
+        self.expired_counter = 0
+        self.modify_counter = 0
 
     def exit(self):
         """
@@ -70,25 +83,55 @@ class SyncProcess(aedir.process.TimestampStateMixin, aedir.process.AEProcess):
                 self.modify_counter,
                 self.deactivate_counter
             )
-        else:
-            self.logger.debug('No modifications.')
+        self.logger.debug('Found %d auto-expiry AE-DIR entries', self.aeobject_counter)
+        if self.expired_counter:
+            self.logger.info('Modifed %d auto-expiry AE-DIR entries.', self.expired_counter)
         if self.error_counter:
             self.logger.error('%d errors.', self.error_counter)
 
-    def run_worker(self, last_run_timestr):
+    def _expire_entries(self, current_time_str):
         """
-        the main worker part
+        run aeStatus updates
         """
+        expiry_filter = EXPIRY_FILTER_TMPL.format(now=current_time_str)
+        self.logger.debug('expiry_filter = %r', expiry_filter)
+        try:
+            msg_id = self.ldap_conn.search(
+                self.ldap_conn.search_base,
+                ldap0.SCOPE_SUBTREE,
+                expiry_filter,
+                attrlist=['aeStatus', 'aeExpiryStatus'],
+            )
+        except ldap0.LDAPError as ldap_error:
+            self.logger.error('LDAPError searching %r: %s', expiry_filter, ldap_error)
+            return
+        for ldap_res in self.ldap_conn.results(msg_id):
+            for aeobj in ldap_res.rdata:
+                self.aeobject_counter += 1
+                modlist = [
+                    (ldap0.MOD_DELETE, b'aeStatus', aeobj.entry_as['aeStatus']),
+                    (ldap0.MOD_ADD, b'aeStatus', aeobj.entry_as['aeExpiryStatus']),
+                ]
+                try:
+                    self.ldap_conn.modify_s(
+                        aeobj.dn_s,
+                        [
+                            (ldap0.MOD_DELETE, b'aeStatus', aeobj.entry_as['aeStatus']),
+                            (ldap0.MOD_ADD, b'aeStatus', aeobj.entry_as['aeExpiryStatus']),
+                        ]
+                    )
+                except ldap0.LDAPError as ldap_error:
+                    self.logger.warning('LDAPError modifying %r: %s', aeobj.dn_s, ldap_error)
+                    self.error_counter += 1
+                else:
+                    self.logger.info('Expired aeStatus in %r: %s', aeobj.dn_s, modlist)
+                    self.expired_counter += 1
+        # end of _expire_entries()
 
-        current_time_str = ldap0.functions.strf_secs(time.time())
-        self.logger.debug(
-            'current_time_str=%r last_run_timestr=%r',
-            current_time_str,
-            last_run_timestr,
-        )
-
-        # Update aeUser entries
-        #-----------------------------------------------------------------------
+    def _update_pers_attrs(self, last_run_timestr, current_time_str):
+        """
+        update aeUser person attributes
+        """
 
         aeperson_filterstr = (
             '(&(objectClass=aePerson)(modifyTimestamp>={0})(!(modifyTimestamp>={1})))'
@@ -96,12 +139,8 @@ class SyncProcess(aedir.process.TimestampStateMixin, aedir.process.AEProcess):
             last_run_timestr,
             current_time_str,
         )
+        self.logger.debug('aeperson_filterstr = %r', aeperson_filterstr)
 
-        self.logger.debug(
-            'Searching in %r with filter %r',
-            self.ldap_conn.search_base,
-            aeperson_filterstr,
-        )
         msg_id = self.ldap_conn.search(
             self.ldap_conn.search_base,
             ldap0.SCOPE_SUBTREE,
@@ -118,7 +157,9 @@ class SyncProcess(aedir.process.TimestampStateMixin, aedir.process.AEProcess):
                 aeuser_results = self.ldap_conn.search_s(
                     self.ldap_conn.search_base,
                     ldap0.SCOPE_SUBTREE,
-                    '(&(objectClass=aeUser)(aePerson=%s))' % (ldap0.filter.escape_str(aeperson.dn_s)),
+                    '(&(objectClass=aeUser)(aePerson={0}))'.format(
+                        ldap0.filter.escape_str(aeperson.dn_s),
+                    ),
                     attrlist=AEDIR_AEPERSON_ATTRS+['uid', 'uidNumber', 'displayName'],
                 )
 
@@ -184,7 +225,21 @@ class SyncProcess(aedir.process.TimestampStateMixin, aedir.process.AEProcess):
                         )
                         self.modify_counter += 1
 
-        return current_time_str # end of run_worker()
+        # end of _update_pers_attrs()
+
+    def run_worker(self, last_run_timestr):
+        """
+        the main program
+        """
+        current_time_str = ldap0.functions.strf_secs(time.time())
+        self.logger.debug(
+            'current_time_str=%r last_run_timestr=%r',
+            current_time_str,
+            last_run_timestr,
+        )
+        self._update_pers_attrs(last_run_timestr, current_time_str)
+        self._expire_entries(current_time_str)
+        return current_time_str
 
 
 def main():
