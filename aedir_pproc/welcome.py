@@ -4,8 +4,6 @@ aedir_pproc.welcome -- Send welcome e-mail to new users which have not set a pas
 """
 
 # from Python's standard lib
-import sys
-import os
 import time
 import smtplib
 import email.utils
@@ -19,31 +17,28 @@ import mailutil
 import ldap0
 import ldap0.functions
 
-# the separate mailutil module
-import mailutil
-
 # the separate python-aedir module
 import aedir.process
 
-from .__about__ import __version__, __author__, __license__
+from .__about__ import __version__
 
 # Import constants from configuration module
-from aedirpwd_cnf import \
-    APP_PATH_PREFIX, \
-    FILTERSTR_NO_WELCOME_YET, \
-    FILTERSTR_USER, \
-    NOTIFY_EMAIL_SUBJECT, \
-    NOTIFY_EMAIL_TEMPLATE, \
-    NOTIFY_OLDEST_TIMESPAN, \
-    NOTIFY_SUCCESSFUL_MOD, \
-    PWD_LDAP_URL, \
-    SERVER_ID, \
-    SMTP_DEBUGLEVEL, \
-    SMTP_FROM, \
-    SMTP_LOCALHOSTNAME, \
-    SMTP_TLS_CACERTS, \
-    SMTP_URL, \
-    WEB_CTX_HOST
+from aedirpwd_cnf import (
+    APP_PATH_PREFIX,
+    FILTERSTR_NO_WELCOME_YET,
+    FILTERSTR_USER,
+    NOTIFY_EMAIL_SUBJECT,
+    NOTIFY_EMAIL_TEMPLATE,
+    NOTIFY_OLDEST_TIMESPAN,
+    NOTIFY_SUCCESSFUL_MOD,
+    PWD_LDAP_URL,
+    SMTP_DEBUGLEVEL,
+    SMTP_FROM,
+    SMTP_LOCALHOSTNAME,
+    SMTP_TLS_CACERTS,
+    SMTP_URL,
+    WEB_CTX_HOST,
+)
 
 #-----------------------------------------------------------------------
 # Classes and functions
@@ -54,7 +49,6 @@ class AEDIRWelcomeMailJob(aedir.process.AEProcess):
     Job instance
     """
     script_version = __version__
-    ldap_url = PWD_LDAP_URL
     notify_oldest_timespan = NOTIFY_OLDEST_TIMESPAN
     user_attrs = [
         'objectClass',
@@ -72,12 +66,12 @@ class AEDIRWelcomeMailJob(aedir.process.AEProcess):
         'mail'
     ]
 
-    def __init__(self, server_id):
+    def __init__(self):
         aedir.process.AEProcess.__init__(self)
+        self.ldap_url = PWD_LDAP_URL
         self.host_fqdn = getfqdn()
-        self.server_id = server_id
         self._smtp_conn = None
-        self.logger.debug('running on %r with (serverID %r)', self.host_fqdn, self.server_id)
+        self.logger.debug('running on %r', self.host_fqdn)
 
     def _get_time_strings(self):
         """
@@ -135,7 +129,6 @@ class AEDIRWelcomeMailJob(aedir.process.AEProcess):
             FILTERSTR_NO_WELCOME_YET.format(
                 currenttime=current_run_timestr,
                 lasttime=last_run_timestr,
-                serverid=self.server_id,
             )
         )
         self.logger.debug(
@@ -199,7 +192,6 @@ class AEDIRWelcomeMailJob(aedir.process.AEProcess):
                         ldap_res.dn_s,
                         ldap_err,
                     )
-                    admin_entry = {}
                 else:
                     if admin_res is None:
                         self.logger.warning(
@@ -239,7 +231,7 @@ def main():
     """
     run the process
     """
-    with AEDIRWelcomeMailJob(SERVER_ID) as ae_process:
+    with AEDIRWelcomeMailJob() as ae_process:
         ae_process.run(max_runs=1)
 
 

@@ -15,13 +15,13 @@ import ldap0.functions
 import aedir.process
 
 # Import constants from configuration module
-from aedirpwd_cnf import \
-    FILTERSTR_EXPIRE, \
-    NOTIFY_OLDEST_TIMESPAN, \
-    PWD_ADMIN_LEN, \
-    SERVER_ID
+from aedirpwd_cnf import (
+    FILTERSTR_EXPIRE,
+    NOTIFY_OLDEST_TIMESPAN,
+    PWD_ADMIN_LEN,
+)
 
-from ..__about__ import __version__, __author__, __license__
+from ..__about__ import __version__
 
 #-----------------------------------------------------------------------
 # Classes and functions
@@ -49,13 +49,12 @@ class AEDIRPwdJob(aedir.process.AEProcess):
         'mail'
     ]
 
-    def __init__(self, server_id):
+    def __init__(self):
         aedir.process.AEProcess.__init__(self)
         self.host_fqdn = getfqdn()
-        self.server_id = server_id
         self.notification_counter = 0
         self._smtp_conn = None
-        self.logger.debug('running on %r with (serverID %r)', self.host_fqdn, self.server_id)
+        self.logger.debug('running on %r', self.host_fqdn)
 
     def _get_time_strings(self):
         """
@@ -143,7 +142,7 @@ def main():
     """
     run the process
     """
-    with AEDIRPwdJob(SERVER_ID) as ae_process:
+    with AEDIRPwdJob() as ae_process:
         ae_process.run(max_runs=1)
 
 

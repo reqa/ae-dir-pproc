@@ -17,18 +17,19 @@ import ldap0
 import ldap0.functions
 
 # Import constants from configuration module
-from aedirpwd_cnf import \
-    APP_PATH_PREFIX, \
-    SMTP_DEBUGLEVEL, \
-    SMTP_FROM, \
-    SMTP_LOCALHOSTNAME, \
-    SMTP_TLS_CACERTS, \
-    SMTP_URL, \
-    TEMPLATES_DIRNAME, \
-    USER_MAIL_ENABLED, \
-    WEB_CTX_HOST
+from aedirpwd_cnf import (
+    APP_PATH_PREFIX,
+    SMTP_DEBUGLEVEL,
+    SMTP_FROM,
+    SMTP_LOCALHOSTNAME,
+    SMTP_TLS_CACERTS,
+    SMTP_URL,
+    TEMPLATES_DIRNAME,
+    USER_MAIL_ENABLED,
+    WEB_CTX_HOST,
+)
 
-from ..__about__ import __version__, __author__, __license__
+from ..__about__ import __version__
 
 #-----------------------------------------------------------------------
 # Configuration constants
