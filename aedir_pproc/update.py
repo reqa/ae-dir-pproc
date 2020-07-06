@@ -22,7 +22,7 @@ from ldap0.base import encode_list
 import aedir
 import aedir.process
 
-from .__about__ import __version__, __author__, __license__
+from .__about__ import __version__
 from .groups import AEGroupUpdater
 
 #-----------------------------------------------------------------------

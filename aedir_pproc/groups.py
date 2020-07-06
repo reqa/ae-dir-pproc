@@ -19,7 +19,7 @@ import ldap0.ldapurl
 import aedir
 import aedir.process
 
-from .__about__ import __version__, __author__, __license__
+from .__about__ import __version__
 
 #-----------------------------------------------------------------------
 # Configuration constants
