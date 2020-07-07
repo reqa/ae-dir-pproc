@@ -1115,7 +1115,6 @@ class ViewUser(BaseApp):
                 self.form.d.password.encode('utf-8'),
                 req_ctrls=[self._sess_track_ctrl()],
             )
-            # TODO: really search the reset user and display stuff
             other = self.ldap_conn.find_unique_entry(
                 self.ldap_conn.ldap_url_obj.dn,
                 ldap0.SCOPE_SUBTREE,
