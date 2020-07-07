@@ -9,12 +9,12 @@ import smtplib
 import time
 import email.utils
 
-# the separate python-aedir module
-import aedir.process
-
 # from ldap0
 import ldap0
 import ldap0.functions
+
+# the separate python-aedir module
+import aedir.process
 
 # Import constants from configuration module
 from aedirpwd_cnf import (
