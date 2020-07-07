@@ -5,7 +5,6 @@ aedir_pproc.pwd.expreset - Remove expired msPwdResetObject attributes
 
 # from Python's standard lib
 import time
-from socket import getfqdn
 
 # from ldap0 package
 import ldap0
@@ -17,7 +16,6 @@ import aedir.process
 # Import constants from configuration module
 from aedirpwd_cnf import (
     FILTERSTR_EXPIRE,
-    NOTIFY_OLDEST_TIMESPAN,
     PWD_ADMIN_LEN,
 )
 
@@ -27,62 +25,29 @@ from ..__about__ import __version__
 # Classes and functions
 #-----------------------------------------------------------------------
 
-class AEDIRPwdJob(aedir.process.AEProcess):
+class AEPwdResetExpiration(aedir.process.AEProcess):
     """
     Job instance
     """
     script_version = __version__
-    notify_oldest_timespan = NOTIFY_OLDEST_TIMESPAN
-    user_attrs = [
+    reset_attrs = [
         'objectClass',
-        'uid',
-        'cn',
-        'displayName',
-        'description',
-        'mail',
-        'creatorsName',
-    ]
-    admin_attrs = [
-        'objectClass',
-        'uid',
-        'cn',
-        'mail'
+        'msPwdResetExpirationTime',
+        'msPwdResetTimestamp',
+        'msPwdResetAdminPw',
     ]
 
-    def __init__(self):
-        aedir.process.AEProcess.__init__(self)
-        self.host_fqdn = getfqdn()
-        self.notification_counter = 0
-        self._smtp_conn = None
-        self.logger.debug('running on %r', self.host_fqdn)
-
-    def _get_time_strings(self):
-        """
-        Determine
-        1. oldest possible last timestamp (sounds strange, yeah!)
-        2. and current time
-        """
-        current_time = time.time()
-        return (
-            ldap0.functions.strf_secs(current_time-self.notify_oldest_timespan),
-            ldap0.functions.strf_secs(current_time)
-        )
-
-    def _expire_pwd_reset(self, last_run_timestr, current_run_timestr):
+    def run_worker(self, state):
         """
         Remove expired msPwdResetObject attributes
         """
+        current_run_timestr = ldap0.functions.strf_secs(time.time())
         expired_pwreset_filter = FILTERSTR_EXPIRE.format(currenttime=current_run_timestr)
         ldap_results = self.ldap_conn.search_s(
             self.ldap_conn.search_base,
             ldap0.SCOPE_SUBTREE,
             filterstr=expired_pwreset_filter,
-            attrlist=[
-                'objectClass',
-                'msPwdResetExpirationTime',
-                'msPwdResetTimestamp',
-                'msPwdResetAdminPw',
-            ],
+            attrlist=self.reset_attrs,
         )
         self.logger.debug(
             '%d expired password resets found with %r',
@@ -127,22 +92,16 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                     'Removed msPwdResetObject attributes from %r',
                     res.dn_s,
                 )
-            # end of expire_pwd_reset()
 
-    def run_worker(self, state):
-        """
-        Run the job
-        """
-        last_run_timestr, current_run_timestr = self._get_time_strings()
-        self._expire_pwd_reset(last_run_timestr, current_run_timestr)
-        return current_run_timestr # end of run_worker()
+        return current_run_timestr
+        # end of run_worker()
 
 
 def main():
     """
     run the process
     """
-    with AEDIRPwdJob() as ae_process:
+    with AEPwdResetExpiration() as ae_process:
         ae_process.run(max_runs=1)
 
 
