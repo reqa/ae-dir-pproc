@@ -57,7 +57,7 @@ aedir.process.CatchAllException = Exception
 #-----------------------------------------------------------------------
 
 
-class AEObjectUpdater(aedir.process.TimestampStateMixin, AEGroupUpdater):
+class AEObjectUpdater(aedir.process.TimestampStateMixin, aedir.process.AEProcess):
     """
     The sync process
     """
@@ -240,17 +240,4 @@ class AEObjectUpdater(aedir.process.TimestampStateMixin, AEGroupUpdater):
         )
         self._update_pers_attrs(last_run_timestr, current_time_str)
         self._expire_entries(current_time_str)
-        AEGroupUpdater.run_worker(self, last_run_timestr)
         return current_time_str
-
-
-def main():
-    """
-    run the process
-    """
-    with AEObjectUpdater(sys.argv[1]) as ae_process:
-        ae_process.run(max_runs=1)
-
-
-if __name__ == '__main__':
-    main()

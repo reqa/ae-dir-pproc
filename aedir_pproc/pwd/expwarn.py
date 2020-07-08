@@ -237,15 +237,3 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                     len(notified_users),
                     ', '.join(notified_users),
                 )
-
-
-def main():
-    """
-    run the process
-    """
-    with AEDIRPwdJob() as ae_process:
-        ae_process.run(max_runs=1)
-
-
-if __name__ == '__main__':
-    main()

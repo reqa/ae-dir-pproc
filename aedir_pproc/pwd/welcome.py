@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-aedir_pproc.welcome -- Send welcome e-mail to new users which have not set a password yet
+aedir_pproc.pwd.welcome -- Send welcome e-mail to new users which have not set a password yet
 """
 
 # from Python's standard lib
@@ -20,8 +20,6 @@ import ldap0.functions
 # the separate python-aedir module
 import aedir.process
 
-from .__about__ import __version__
-
 # Import constants from configuration module
 from aedirpwd_cnf import (
     APP_PATH_PREFIX,
@@ -40,11 +38,13 @@ from aedirpwd_cnf import (
     WEB_CTX_HOST,
 )
 
+from ..__about__ import __version__
+
 #-----------------------------------------------------------------------
 # Classes and functions
 #-----------------------------------------------------------------------
 
-class AEDIRWelcomeMailJob(aedir.process.AEProcess):
+class AEWelcomeMailer(aedir.process.AEProcess):
     """
     Job instance
     """
@@ -69,9 +69,6 @@ class AEDIRWelcomeMailJob(aedir.process.AEProcess):
     def __init__(self):
         aedir.process.AEProcess.__init__(self)
         self.ldap_url = PWD_LDAP_URL
-        self.host_fqdn = getfqdn()
-        self._smtp_conn = None
-        self.logger.debug('running on %r', self.host_fqdn)
 
     def _get_time_strings(self):
         """
@@ -151,11 +148,11 @@ class AEDIRWelcomeMailJob(aedir.process.AEProcess):
             smtp_message_tmpl = tfile.read()
 
         with self.smtp_connection(
-            SMTP_URL,
-            local_hostname=SMTP_LOCALHOSTNAME,
-            ca_certs=SMTP_TLS_CACERTS,
-            debug_level=SMTP_DEBUGLEVEL,
-        ) as smtp_conn:
+                SMTP_URL,
+                local_hostname=SMTP_LOCALHOSTNAME,
+                ca_certs=SMTP_TLS_CACERTS,
+                debug_level=SMTP_DEBUGLEVEL,
+            ) as smtp_conn:
 
             for ldap_res in ldap_results:
                 to_addr = ldap_res.entry_s['mail'][0]
@@ -224,16 +221,5 @@ class AEDIRWelcomeMailJob(aedir.process.AEProcess):
         """
         last_run_timestr, current_run_timestr = self._get_time_strings()
         self._welcome_notifications(last_run_timestr, current_run_timestr)
-        return current_run_timestr # end of run_worker()
-
-
-def main():
-    """
-    run the process
-    """
-    with AEDIRWelcomeMailJob() as ae_process:
-        ae_process.run(max_runs=1)
-
-
-if __name__ == '__main__':
-    main()
+        return current_run_timestr
+        # end of run_worker()

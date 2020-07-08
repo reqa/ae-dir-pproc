@@ -95,15 +95,3 @@ class AEPwdResetExpiration(aedir.process.AEProcess):
 
         return current_run_timestr
         # end of run_worker()
-
-
-def main():
-    """
-    run the process
-    """
-    with AEPwdResetExpiration() as ae_process:
-        ae_process.run(max_runs=1)
-
-
-if __name__ == '__main__':
-    main()
