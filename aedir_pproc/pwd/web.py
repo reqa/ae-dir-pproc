@@ -139,7 +139,7 @@ VIEWUSER_DEREF_CONTROL = DereferenceControl(
 )
 
 # initialize a custom logger
-APP_LOGGER = aedir.init_logger(log_name='ae-dir-pwd')
+APP_LOGGER = aedir.init_logger(__name__)
 APP_LOGGER.setLevel(os.environ.get('LOG_LEVEL', 'INFO').upper())
 
 # Mapping of request URL path to Python handler class
