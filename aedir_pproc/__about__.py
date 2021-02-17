@@ -5,7 +5,7 @@ aedir_pproc.__about__ - Meta information
 
 import collections
 
-VersionInfo = collections.namedtuple('version_info', ('major', 'minor', 'micro'))
+VersionInfo = collections.namedtuple('VersionInfo', ('major', 'minor', 'micro'))
 __version_info__ = VersionInfo(
     major=1,
     minor=4,
