@@ -138,6 +138,39 @@ VIEWUSER_DEREF_CONTROL = DereferenceControl(
     },
 )
 
+# more complex HTTP security header values
+HTTP_CSP_HEADER = ' '.join((
+    "base-uri 'none';",
+    "child-src 'none';",
+    "connect-src 'none';",
+    "default-src 'none';",
+    "font-src 'self';",
+    "form-action 'self';",
+    "frame-ancestors 'none';",
+    "frame-src 'none';",
+    "img-src 'self' data:;",
+    "media-src 'none';",
+    "object-src 'none';",
+    "script-src 'none';",
+    "style-src 'self';",
+))
+HTTP_PERMISSIONS_POLICY_HEADER = ', '.join((
+    'accelerometer=(none)',
+    'ambient-light-sensor=(none)',
+    'camera=(none)',
+    'clipboard-read=(none)',
+    'clipboard-write=(none)',
+    'display-capture'
+    'geolocation=(none)',
+    'gyroscope=(none)',
+    'magnetometer=(none)',
+    'microphone=(none)',
+    'midi=(none)',
+    'notifications=(none)',
+    'push=(none)',
+    'speaker-selection=(none)',
+))
+
 # initialize a custom logger
 APP_LOGGER = aedir.init_logger(__name__)
 APP_LOGGER.setLevel(os.environ.get('LOG_LEVEL', 'INFO').upper())
@@ -323,23 +356,6 @@ class Default:
         """
         Add more HTTP headers to response
         """
-        csp_value = ' '.join((
-        ))
-        csp_value = ' '.join((
-            "base-uri 'none';",
-            "child-src 'none';",
-            "connect-src 'none';",
-            "default-src 'none';",
-            "font-src 'self';",
-            "form-action 'self';",
-            "frame-ancestors 'none';",
-            "frame-src 'none';",
-            "img-src 'self' data:;",
-            "media-src 'none';",
-            "object-src 'none';",
-            "script-src 'none';",
-            "style-src 'self';",
-        ))
         for header, value in (
                 ('Cache-Control', 'no-store,no-cache,max-age=0,must-revalidate'),
                 ('X-XSS-Protection', '1; mode=block'),
@@ -347,10 +363,11 @@ class Default:
                 ('X-Content-Type-Options', 'nosniff'),
                 ('X-Frame-Options', 'deny'),
                 ('Server', 'unknown'),
-                ('Content-Security-Policy', csp_value),
-                ('X-Webkit-CSP', csp_value),
-                ('X-Content-Security-Policy', csp_value),
+                ('Content-Security-Policy', HTTP_CSP_HEADER),
+                ('X-Webkit-CSP', HTTP_CSP_HEADER),
+                ('X-Content-Security-Policy', HTTP_CSP_HEADER),
                 ('Referrer-Policy', 'same-origin'),
+                ('Permissions-Policy', HTTP_PERMISSIONS_POLICY_HEADER),
             ):
             web.header(header, value)
         # end of Default._add_headers()
