@@ -1,0 +1,59 @@
+$def with (displayname,resetpending,resetpassword,resetexpiration,resetentry)
+$var title: User info for $displayname
+
+<div id="content">
+
+  <h1>$displayname</h1>
+
+
+    $if resetpending:
+        <h2>Password reset</h2>
+        <table>
+          <tr>
+            <td>Reset password:</td><td><strong>$resetpassword</strong></td>
+          </tr>
+          <tr>
+            <td>Valid until (UTC):</td><td>$resetexpiration</td>
+          </tr>
+        </table>
+    $else:
+        No password reset pending.
+
+    <h2>Contact information</h2>
+    <table>
+      <tr>
+        <td>Person name:</td><td>$resetentry['cn']</td>
+      </tr>
+      $if 'ou' in resetentry:
+          <tr>
+            <td>Organizational unit:</td><td>$resetentry['ou']</td>
+          </tr>
+      <tr>
+        <td>E-mail address:</td><td>$resetentry['mail']</td>
+      </tr>
+      $if 'telephoneNumber' in resetentry:
+          <tr>
+            <td>Office telephone:</td><td>$resetentry['telephoneNumber']</td>
+          </tr>
+      $if 'mobile' in resetentry:
+          <tr>
+            <td>Mobile telephone:</td><td>$resetentry['mobile']</td>
+          </tr>
+    </table>
+    
+
+    <ul class="tip">
+    $if resetpassword:
+          <li>
+            Contact the user over a trusted channel to communicate the reset password.
+          </li>
+          <li>
+            Inform the user about expiration time. Mind UTC time zone!
+          </li>
+    $else:
+          <li>
+            If no reset password is displayed the policy might not mandate one.
+          </li>
+    </ul>
+
+</div>

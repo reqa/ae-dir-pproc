@@ -1,0 +1,22 @@
+$def with (username,userdn)
+$var title: Password reset for $username
+
+<div id="content">
+
+  <h1>Password reset for $username</h1>
+
+  <p>
+    New password of LDAP entry
+  </p>
+  <p class="userDN">
+    $userdn
+  </p>
+  <p>
+    was successfully set.
+  </p>
+
+  <p class="tip">
+    Try to <a href="checkpw?username=$username">check new password</a> right now.
+  </p>
+
+</div>

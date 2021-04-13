@@ -1,0 +1,56 @@
+$def with (content)
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <title>&AElig;-DIR - $content.title</title>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <base target="_top">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="x-frame-options" content="deny">
+    <meta name="Cache-Control" content="private">
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="/css/ae-dir.css"
+      integrity="sha512-siysDlkfJaVSRPFYCnV4aYq2JXPJ2+X2nRVypp+ELXKc53dKcHTHQImojwRn1VURAg7LGgQG81FQv3QD8SGflQ=="
+    >
+    <link
+      href="/css/ae-web-app.css"
+      rel="stylesheet"
+      type="text/css"
+      integrity="sha512-uwYzSwoFbj9LoTE939wqbi/Kbf23/N6hheXHzZ/wnY3X7a3woFF3S+Lj0dtED/JV4t2gVKlkQ/Y5aeA6IOtv6A=="
+    >
+  </head>
+
+  <body>
+
+    <div id="navigation">
+      <a title="Overview of &AElig;-DIR password self-service" href=".">&AElig;-DIR PwS</a> /
+      <a title="Change own password" href="changepw">Change</a> /
+      <a title="Check own password" href="checkpw">Check</a> /
+      <a title="Request password reset" href="requestpw">Reset</a> /
+      <a title="View user account" href="viewuser">View User</a>
+    </div>
+
+    $:content
+
+    <p id="footer">
+      <!--
+      <a href="mailto:ae-dir-admins@example.com?SUBJECT=[&AElig;-DIR]%20Issue%20using%20Password%20Self-Service"
+         title="Send e-mail to ae-admins@example.com">Contact &AElig; admins</a> //
+      -->
+      <a href="/pwd.html"
+         title="Read user guide for &AElig;-DIR Password Self-Service">User guide</a> //
+      <a href="/web2ldap"
+         title="Access to administration UI (web2ldap)">Admin UI (web2ldap)</a> //
+      <a href="/oath/"
+         title="Access to OATH-LDAP Token Enrollment Service">OATH enrollment</a>
+    </p>
+
+  </body>
+
+</html>
+

@@ -1,0 +1,41 @@
+Dear user,
+
+a password reset for your user entry was requested.
+
+If you did that yourself you should immediately set a new password by
+entering the following link in your web browser. This is possible only
+for a couple of minutes.
+
+https://{web_ctx_host}{app_path_prefix}/resetpw?username={username}&temppassword1={temppassword1}
+
+You will need a separate reset password.
+This will be given to you by one of your zone admins:
+
+{admin_email_addrs}
+
+If you react too late to this e-mail and above link does not work you can
+simply request the password reset again with this link:
+
+https://{web_ctx_host}{app_path_prefix}/requestpw?username={username}
+
+If someone else falsely invoked the password request you can simply
+ignore this message or inform the administrator reachable through
+{fromaddr}.
+
+Your Æ admins
+
+--------------------------- Account details ----------------------------
+
+User name:
+{username}
+
+Temporary password:
+{temppassword1}
+
+Distinguished name of user entry:
+{userdn}
+
+IP address from which password reset was invoked:
+{remote_ip}
+
+------------------------------------------------------------------------

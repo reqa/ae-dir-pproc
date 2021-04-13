@@ -1,0 +1,33 @@
+$def with (username,showname,message)
+$var title: Show reset password
+
+<div id="content">
+
+  <h1>Show reset password for $showname</h1>
+
+  $if message:
+    <p class="message">$message</p>
+
+  <form method="POST" action="showpw" enctype="application/x-www-form-urlencoded" accept-charset="utf-8">
+
+    <input type="hidden" name="showname" value="$showname">
+    <input type="hidden" name="username" value="$username">
+
+    <fieldset>
+      <table>
+        <tr>
+          <th>
+            Your password:
+          </th>
+          <td>
+            <input type="password" name="oldpassword" value="" size="20">
+          </td>
+        </tr>
+      </table>
+    </fieldset>
+
+    <input type="submit" class="submit" name="submit" value="Show reset password" />
+
+  </form>
+
+</div>

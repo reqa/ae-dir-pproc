@@ -1,0 +1,35 @@
+Dear zone admin,
+
+a password reset for a user entry was requested (see below).
+
+Your actions if this request seems ok:
+
+1. Please contact the user
+   - personally or
+   - via phone call to a known number
+
+2. Tell the user his reset password you can read by accessing this link
+   (needs your zone admin login):
+
+   https://{web_ctx_host}/pwd/viewuser?othername={username}
+
+If someone falsely invoked the password request you can simply
+ignore this message.
+
+Your Æ admins
+
+--------------------------- Account details ----------------------------
+
+User login ID:
+{username}
+
+User display name:
+{userdispname}
+
+Distinguished name of user entry:
+{userdn}
+
+IP address from which password reset was invoked:
+{remote_ip}
+
+------------------------------------------------------------------------

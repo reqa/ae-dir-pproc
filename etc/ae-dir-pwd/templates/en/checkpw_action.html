@@ -1,0 +1,21 @@
+$def with (username,userdn,valid_until)
+$var title: Password check for $username
+
+<div id="content">
+
+  <h1>Password check for $username</h1>
+
+  <p>
+    Password of LDAP entry
+  </p>
+  <p class="userDN">
+    $userdn
+  </p>
+  <p>
+    was successfully checked.
+  </p>
+  <p>
+    Valid until: $valid_until
+  </p>
+
+</div>

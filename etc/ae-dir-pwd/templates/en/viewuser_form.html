@@ -1,0 +1,50 @@
+$def with (username,othername,message)
+$var title: View user information
+
+<div id="content">
+
+  <h1>Change password</h1>
+
+  $if message:
+    <p class="message">$message</p>
+
+  <form method="POST" action="viewuser" enctype="application/x-www-form-urlencoded" accept-charset="utf-8">
+
+    <fieldset>
+      <table>
+        <tr>
+          <th>
+            Admin user name:
+          </th>
+          <td>
+            <input name="username" value="$username" size="25" required>
+          </td>
+        </tr>
+        <tr>
+          <th>
+            Admin password:
+          </th>
+          <td>
+            <input type="password" name="password" value="" size="60">
+          </td>
+        </tr>
+        <tr>
+          <th>
+            User name to search:
+          </th>
+          <td>
+            <input name="othername" value="$othername" size="25" required>
+          </td>
+        </tr>
+      </table>
+      <input type="submit" class="submit" name="submit" value="View user" />
+    </fieldset>
+
+  </form>
+
+  <ul class="tip">
+    <li>Only zone admins are allowed to query reset password of a particular user.</li>
+    <li>You might need to provide a 2nd factor with the password!</li>
+  </ul>
+
+</div>

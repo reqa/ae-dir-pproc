@@ -1,0 +1,64 @@
+$def with (username,message)
+$var title: Change password
+
+<div id="content">
+
+  <h1>Change password</h1>
+
+  $if message:
+    <p class="message">$message</p>
+
+  <form method="POST" action="changepw" enctype="application/x-www-form-urlencoded" accept-charset="utf-8">
+
+    <fieldset>
+      <table>
+        <tr>
+          <th>
+            User name:
+          </th>
+          <td>
+            <input name="username" value="$username" size="25" required>
+          </td>
+        </tr>
+        <tr>
+          <th>
+            Old password:
+          </th>
+          <td>
+            <input type="password" name="password" value="" size="60" required>
+          </td>
+        </tr>
+        <tr>
+          <th>
+            New password:
+          </th>
+          <td>
+            <input type="password" name="newpassword1" value="" size="40" required>
+          </td>
+        </tr>
+        <tr>
+          <th>
+            New password (repeat):
+          </th>
+          <td>
+            <input type="password" name="newpassword2" value="" size="40" required>
+          </td>
+        </tr>
+      </table>
+      <input type="submit" class="submit" name="submit" value="Set new password" />
+    </fieldset>
+
+  </form>
+
+  <ul class="tip">
+    <li>Note the minimum password length!</li>
+    <li>You might need to provide a 2nd factor with the old password!</li>
+    <li>Password with capital and lower-case chars, numbers, and special chars.</li>
+    <li><strong>Password must not be used before!</strong></li>
+    <li>
+      Forgot old password? &rarr;
+      <a href="requestpw?username=$username">Request password reset</a>.
+    </li>
+  </ul>
+
+</div>
