@@ -64,7 +64,8 @@ class AEWelcomeMailer(aedir.process.AEProcess):
         aedir.process.AEProcess.__init__(self)
         self.ldap_url = PWD_LDAP_URL
 
-    def _get_time_strings(self):
+    @staticmethod
+    def _get_time_strings():
         """
         Determine
         1. oldest possible last timestamp (sounds strange, yeah!)
