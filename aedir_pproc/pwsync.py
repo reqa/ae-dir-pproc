@@ -480,12 +480,6 @@ def run():
     script_name = os.path.abspath(sys.argv[0])
     pwsync_queue = DictQueue()
 
-    log_level = LOG_LEVEL
-    console_log_format = None
-    if __debug__ and os.environ.get('DEBUG', 'no') == 'yes':
-        log_level = logging.DEBUG
-        console_log_format = CONSOLE_LOG_FORMAT
-
     my_logger = init_logger(os.path.basename(script_name))
 
     my_logger.info(
