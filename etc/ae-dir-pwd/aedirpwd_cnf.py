@@ -122,7 +122,7 @@ WELCOME_OLDEST_TIMESPAN = 86400.0
 # E-Mail subject for notification message
 WELCOME_EMAIL_SUBJECT = u'New Æ-DIR account "{user_uid}" added/activated for {user_cn}'
 # E-Mail body template file for notification message
-WELCOME_EMAIL_TEMPLATE = '/opt/ae-dir/etc/ae-dir-pwd/templates/en/notify_user.txt'
+WELCOME_EMAIL_TEMPLATE = '/opt/ae-dir/etc/ae-dir-pwd/templates/en/welcome_user_email.txt'
 
 # modifications to be applied to user entry after successfully sending e-mail
 WELCOME_SUCCESSFUL_MOD = [
