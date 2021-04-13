@@ -25,10 +25,10 @@ from aedirpwd_cnf import (
     APP_PATH_PREFIX,
     FILTERSTR_NO_WELCOME_YET,
     FILTERSTR_USER,
-    NOTIFY_EMAIL_SUBJECT,
-    NOTIFY_EMAIL_TEMPLATE,
-    NOTIFY_OLDEST_TIMESPAN,
-    NOTIFY_SUCCESSFUL_MOD,
+    WELCOME_EMAIL_SUBJECT,
+    WELCOME_EMAIL_TEMPLATE,
+    WELCOME_OLDEST_TIMESPAN,
+    WELCOME_SUCCESSFUL_MOD,
     PWD_LDAP_URL,
     SMTP_DEBUGLEVEL,
     SMTP_FROM,
@@ -49,7 +49,6 @@ class AEWelcomeMailer(aedir.process.AEProcess):
     Job instance
     """
     script_version = __version__
-    notify_oldest_timespan = NOTIFY_OLDEST_TIMESPAN
     user_attrs = [
         'objectClass',
         'uid',
@@ -78,7 +77,7 @@ class AEWelcomeMailer(aedir.process.AEProcess):
         """
         current_time = time.time()
         return (
-            ldap0.functions.strf_secs(current_time-self.notify_oldest_timespan),
+            ldap0.functions.strf_secs(current_time-WELCOME_OLDEST_TIMESPAN),
             ldap0.functions.strf_secs(current_time)
         )
 
@@ -88,7 +87,7 @@ class AEWelcomeMailer(aedir.process.AEProcess):
         """
         self.logger.debug('msg_attrs = %r', msg_attrs)
         smtp_message = smtp_message_tmpl.format(**msg_attrs)
-        smtp_subject = NOTIFY_EMAIL_SUBJECT.format(**msg_attrs)
+        smtp_subject = WELCOME_EMAIL_SUBJECT.format(**msg_attrs)
         self.logger.debug('smtp_subject = %r', smtp_subject)
         self.logger.debug('smtp_message = %r', smtp_message)
         try:
@@ -144,7 +143,7 @@ class AEWelcomeMailer(aedir.process.AEProcess):
 
         notification_counter = 0
 
-        with open(NOTIFY_EMAIL_TEMPLATE, 'r', encoding='utf-8') as tfile:
+        with open(WELCOME_EMAIL_TEMPLATE, 'r', encoding='utf-8') as tfile:
             smtp_message_tmpl = tfile.read()
 
         with self.smtp_connection(
@@ -207,8 +206,8 @@ class AEWelcomeMailer(aedir.process.AEProcess):
                             msg_attrs['admin_mail'] = admin_res.entry_s.get('mail', ['unknown'])[0]
                 self._send_welcome_message(smtp_conn, to_addr, smtp_message_tmpl, msg_attrs)
                 notification_counter += 1
-                if NOTIFY_SUCCESSFUL_MOD:
-                    self.ldap_conn.modify_s(ldap_res.dn_s, NOTIFY_SUCCESSFUL_MOD)
+                if WELCOME_SUCCESSFUL_MOD:
+                    self.ldap_conn.modify_s(ldap_res.dn_s, WELCOME_SUCCESSFUL_MOD)
 
         if notification_counter:
             self.logger.info('Sent %d welcome notifications', notification_counter)
