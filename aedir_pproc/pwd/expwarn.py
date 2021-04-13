@@ -76,7 +76,7 @@ PWD_EXPIRYWARN_MAIL_TEMPLATE = os.path.join(TEMPLATES_DIRNAME, 'pwd_expiry_warni
 # Classes and functions
 #-----------------------------------------------------------------------
 
-class AEDIRPwdJob(aedir.process.AEProcess):
+class AEPasswordExpiryChecker(aedir.process.AEProcess):
     """
     Job instance
     """
@@ -105,7 +105,47 @@ class AEDIRPwdJob(aedir.process.AEProcess):
         self.logger.debug('Found %d pwdPolicy entries: %s', len(pwd_policy_list), pwd_policy_list)
         return pwd_policy_list # enf of _get_pwd_policy_entries()
 
-    def _send_password_expiry_notifications(self, current_time):
+    def _send_expiry_warnings(self, pwd_expire_warning_list):
+        """
+        send the password expiry warning messages via SMTP
+        """
+        with self.smtp_connection(
+                SMTP_URL,
+                local_hostname=SMTP_LOCALHOSTNAME,
+                ca_certs=SMTP_TLS_CACERTS,
+                debug_level=SMTP_DEBUGLEVEL,
+            ) as smtp_conn:
+            notified_users = []
+            for res in pwd_expire_warning_list:
+                user_data = {
+                    'user_uid': res.entry_s['uid'][0],
+                    'user_cn': res.entry_s.get('cn', [''])[0],
+                    'user_displayname': res.entry_s.get('displayName', [''])[0],
+                    'user_description': res.entry_s.get('description', [''])[0],
+                    'emailaddr': res.entry_s['mail'][0],
+                    'fromaddr': SMTP_FROM,
+                    'user_dn': res.dn_s,
+                    'web_ctx_host': WEB_CTX_HOST,
+                    'app_path_prefix': APP_PATH_PREFIX,
+                }
+                try:
+                    self.send_simple_message(
+                        smtp_conn,
+                        SMTP_FROM,
+                        res.entry_s['mail'][0],
+                        PWD_EXPIRYWARN_MAIL_SUBJECT,
+                        PWD_EXPIRYWARN_MAIL_TEMPLATE,
+                        user_data,
+                        raise_refused=True,
+                    )
+                except SMTPRecipientsRefused:
+                    continue
+                else:
+                    notified_users.append(res.entry_s['uid'][0])
+        return notified_users
+        # end of _send_expiry_warnings()
+
+    def _check_password_expiry(self, current_time):
         """
         send password expiry warning e-mails
         """
@@ -137,71 +177,41 @@ class AEDIRPwdJob(aedir.process.AEProcess):
             )
 
             for res in ldap_results:
-                to_addr = res.entry_s['mail'][0]
                 self.logger.debug(
                     'Prepare password expiry notification for %r sent to %r',
                     res.dn_s,
-                    to_addr,
+                    res.entry_s['mail'][0],
                 )
-                pwd_expire_warning_list.append({
-                    'user_uid': res.entry_s['uid'][0],
-                    'user_cn': res.entry_s.get('cn', [''])[0],
-                    'user_displayname': res.entry_s.get('displayName', [''])[0],
-                    'user_description': res.entry_s.get('description', [''])[0],
-                    'emailaddr': to_addr,
-                    'fromaddr': SMTP_FROM,
-                    'user_dn': res.dn_s,
-                    'web_ctx_host': WEB_CTX_HOST,
-                    'app_path_prefix': APP_PATH_PREFIX,
-                })
+                pwd_expire_warning_list.append(res)
 
         self.logger.debug('pwd_expire_warning_list = %s', pwd_expire_warning_list)
 
         if not pwd_expire_warning_list:
             self.logger.info('No results => no password expiry notifications')
-        elif USER_MAIL_ENABLED is not True:
+            return
+
+        if USER_MAIL_ENABLED is not True:
             self.logger.info(
                 'Sending e-mails is disabled => Supressed %d password expiry notifications to %s',
                 len(pwd_expire_warning_list),
-                ', '.join([user_data['user_uid'] for user_data in pwd_expire_warning_list]),
+                ', '.join([res.entry_s['uid'][0] for res in pwd_expire_warning_list]),
             )
-        else:
+            return
 
-            with self.smtp_connection(
-                    SMTP_URL,
-                    local_hostname=SMTP_LOCALHOSTNAME,
-                    ca_certs=SMTP_TLS_CACERTS,
-                    debug_level=SMTP_DEBUGLEVEL,
-                ) as smtp_conn:
-                notified_users = []
-                for user_data in pwd_expire_warning_list:
-                    to_addr = user_data['emailaddr']
-                    try:
-                        self.send_simple_message(
-                            smtp_conn,
-                            SMTP_FROM,
-                            to_addr,
-                            PWD_EXPIRYWARN_MAIL_SUBJECT,
-                            PWD_EXPIRYWARN_MAIL_TEMPLATE,
-                            user_data,
-                            raise_refused=True,
-                        )
-                    except SMTPRecipientsRefused:
-                        continue
-                    else:
-                        notified_users.append(user_data['user_uid'])
-                self.logger.info(
-                    'Sent %d password expiry notifications: %s',
-                    len(notified_users),
-                    ', '.join(notified_users),
-                )
+        notified_users = self._send_expiry_warnings(pwd_expire_warning_list)
+        self.logger.info(
+            'Sent %d password expiry notifications: %s',
+            len(notified_users),
+            ', '.join(notified_users),
+        )
+        # end of _check_password_expiry()
 
     def run_worker(self, state):
         """
         Run the job
         """
         current_time = time.time()
-        self._send_password_expiry_notifications(current_time)
+        self._check_password_expiry(current_time)
         return ldap0.functions.strf_secs(current_time)
         # end of run_worker()
 
@@ -210,7 +220,7 @@ def main():
     """
     run the process
     """
-    with AEDIRPwdJob() as ae_process:
+    with AEPasswordExpiryChecker() as ae_process:
         ae_process.run(max_runs=1)
 
 
