@@ -19,17 +19,14 @@ import threading
 import time
 from collections import OrderedDict
 
-# passlib
 import passlib.context
 
-# from pyasn1
 from pyasn1.type.univ import OctetString, Sequence
 from pyasn1.type.namedtype import NamedTypes, OptionalNamedType
 from pyasn1.type.tag import Tag, tagClassContext, tagFormatSimple
 from pyasn1.codec.ber import decoder as pyasn1_decoder
 from pyasn1.error import PyAsn1Error
 
-# from ldap0 package
 import ldap0
 from ldap0.res import SearchResultEntry
 from ldap0.dn import DNObj
@@ -39,12 +36,13 @@ from ldap0.lock import LDAPLock
 from ldap0.pw import unicode_pwd
 from ldap0.ldapobject import ReconnectLDAPObject
 
-# local modules
 from slapdsock.ldaphelper import LocalLDAPConn
-from slapdsock.loghelper import combined_logger
 from slapdsock.handler import SlapdSockHandler
 from slapdsock.service import SlapdSockThreadingServer
 
+from aedir import init_logger
+
+# local modules
 from .__about__ import __version__
 
 #-----------------------------------------------------------------------
@@ -155,12 +153,7 @@ class PWSyncWorker(threading.Thread, LocalLDAPConn):
         if target_ldap_url.attrs is not None and \
            len(target_ldap_url.attrs) == 2:
             self.target_id_attr, self.target_password_attr = target_ldap_url.attrs
-        self.logger = combined_logger(
-            self.__class__.__name__,
-            LOG_LEVEL,
-            sys_log_format=SYS_LOG_FORMAT,
-            console_log_format=CONSOLE_LOG_FORMAT,
-        )
+        self.logger = init_logger(self.__class__.__name__)
         self._queue = que
         threading.Thread.__init__(self, name=self.__class__.__module__+self.__class__.__name__)
         LocalLDAPConn.__init__(self, self.logger)
@@ -463,12 +456,7 @@ class PassModServer(SlapdSockThreadingServer):
             self,
             server_address,
             RequestHandlerClass,
-            combined_logger(
-                self.__class__.__name__,
-                LOG_LEVEL,
-                sys_log_format=SYS_LOG_FORMAT,
-                console_log_format=CONSOLE_LOG_FORMAT,
-            ),
+            init_logger(self.__class__.__name__),
             average_count,
             socket_timeout,
             socket_permissions,
@@ -498,12 +486,7 @@ def run():
         log_level = logging.DEBUG
         console_log_format = CONSOLE_LOG_FORMAT
 
-    my_logger = combined_logger(
-        os.path.basename(script_name),
-        log_level,
-        sys_log_format=SYS_LOG_FORMAT,
-        console_log_format=console_log_format,
-    )
+    my_logger = init_logger(os.path.basename(script_name))
 
     my_logger.info(
         'Starting %s %s (log level %d)',
