@@ -238,10 +238,10 @@ class AEGroupUpdater(aedir.process.AEProcess):
             '(&{0})'.format(''.join(person_filter_parts)),
             attrlist=['1.1'],
         ) or []
-        res = set([
+        res = {
             res.dn_s.lower()
             for res in ldap_result
-        ])
+        }
         return res
         # end of _constrained_persons()
 
