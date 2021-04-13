@@ -34,7 +34,7 @@ setup(
     data_files=[],
     install_requires=[
         'setuptools',
-        'aedir>=1.4.2',
+        'aedir>=1.4.6',
         'mailutil>=0.4.0',
         'web.py>=0.40',
     ],

@@ -5,9 +5,8 @@ aedir_pproc.pwd.expwarn - send password expiry warnings via e-mail
 
 # from Python's standard lib
 import os
-import smtplib
 import time
-import email.utils
+from smtplib import SMTPRecipientsRefused
 
 # from ldap0
 import ldap0
@@ -30,6 +29,7 @@ from aedirpwd_cnf import (
 )
 
 from ..__about__ import __version__
+from . import PWD_USER_ATTRS
 
 #-----------------------------------------------------------------------
 # Configuration constants
@@ -44,6 +44,9 @@ PWDPOLICY_FILTER = (
         '(!(pwdAllowUserChange=FALSE))'
     ')'
 )
+
+# attributes to read from pwdPolicy entries
+PWDPOLICY_ATTRS = ['cn', 'pwdMaxAge', 'pwdExpireWarning']
 
 # Filter string templates
 PWD_EXPIRYWARN_FILTER_TMPL = (
@@ -63,9 +66,6 @@ PWD_EXPIRYWARN_FILTER_TMPL = (
 # mainly used to inform about who did something and send e-mail to
 FILTERSTR_USER = '(&(objectClass=aeUser)(aeStatus=0)(displayName=*)(mail=*))'
 
-# Maximum timespan to search for password-less entries in the past
-NOTIFY_OLDEST_TIMESPAN = 1.75 * 86400.0
-
 # E-Mail subject for notification message
 PWD_EXPIRYWARN_MAIL_SUBJECT = u'Password of Æ-DIR account "{user_uid}" will expire soon!'
 # E-Mail body template file for notification message
@@ -81,42 +81,10 @@ class AEDIRPwdJob(aedir.process.AEProcess):
     Job instance
     """
     script_version = __version__
-    notify_oldest_timespan = NOTIFY_OLDEST_TIMESPAN
-    user_attrs = [
-        'objectClass',
-        'uid',
-        'cn',
-        'displayName',
-        'description',
-        'mail',
-        'creatorsName',
-        'modifiersName',
-    ]
 
     def __init__(self):
         aedir.process.AEProcess.__init__(self)
         self.notification_counter = 0
-        self._smtp_conn = None
-
-    def _get_time_strings(self):
-        """
-        Determine
-        1. oldest possible last timestamp (sounds strange, yeah!)
-        2. and current time
-        """
-        current_time = time.time()
-        return (
-            ldap0.functions.strf_secs(current_time-self.notify_oldest_timespan),
-            ldap0.functions.strf_secs(current_time)
-        )
-
-    def run_worker(self, state):
-        """
-        Run the job
-        """
-        last_run_timestr, current_run_timestr = self._get_time_strings()
-        self._send_password_expiry_notifications(last_run_timestr, current_run_timestr)
-        return current_run_timestr # end of run_worker()
 
     def _get_pwd_policy_entries(self):
         """
@@ -126,11 +94,7 @@ class AEDIRPwdJob(aedir.process.AEProcess):
             self.ldap_conn.search_base,
             ldap0.SCOPE_SUBTREE,
             filterstr=PWDPOLICY_FILTER,
-            attrlist=[
-                'cn',
-                'pwdMaxAge',
-                'pwdExpireWarning'
-            ],
+            attrlist=PWDPOLICY_ATTRS,
         )
         if not ldap_pwdpolicy_results:
             self.logger.error('No pwdPolicy entries found => nothing to do => abort')
@@ -141,11 +105,10 @@ class AEDIRPwdJob(aedir.process.AEProcess):
         self.logger.debug('Found %d pwdPolicy entries: %s', len(pwd_policy_list), pwd_policy_list)
         return pwd_policy_list # enf of _get_pwd_policy_entries()
 
-    def _send_password_expiry_notifications(self, last_run_timestr, current_run_timestr):
+    def _send_password_expiry_notifications(self, current_time):
         """
         send password expiry warning e-mails
         """
-        current_time = ldap0.functions.strp_secs(current_run_timestr)
 
         pwd_policy_list = self._get_pwd_policy_entries()
         pwd_expire_warning_list = []
@@ -170,7 +133,7 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                 self.ldap_conn.search_base,
                 ldap0.SCOPE_SUBTREE,
                 filterstr=pwd_expirywarn_filter,
-                attrlist=self.user_attrs,
+                attrlist=PWD_USER_ATTRS,
             )
 
             for res in ldap_results:
@@ -203,9 +166,6 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                 ', '.join([user_data['user_uid'] for user_data in pwd_expire_warning_list]),
             )
         else:
-            # Read mail template file
-            with open(PWD_EXPIRYWARN_MAIL_TEMPLATE, 'r', encoding='utf-8') as template_file:
-                smtp_message_tmpl = template_file.read()
 
             with self.smtp_connection(
                     SMTP_URL,
@@ -216,25 +176,17 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                 notified_users = []
                 for user_data in pwd_expire_warning_list:
                     to_addr = user_data['emailaddr']
-                    smtp_message = smtp_message_tmpl.format(**user_data)
-                    smtp_subject = PWD_EXPIRYWARN_MAIL_SUBJECT.format(**user_data)
-                    self.logger.debug('smtp_subject = %r', smtp_subject)
-                    self.logger.debug('smtp_message = %r', smtp_message)
                     try:
-                        smtp_conn.send_simple_message(
+                        self.send_simple_message(
+                            smtp_conn,
                             SMTP_FROM,
-                            [to_addr],
-                            'utf-8',
-                            (
-                                ('From', SMTP_FROM),
-                                ('Date', email.utils.formatdate(time.time(), True)),
-                                ('Subject', smtp_subject),
-                                ('To', to_addr),
-                            ),
-                            smtp_message,
+                            to_addr,
+                            PWD_EXPIRYWARN_MAIL_SUBJECT,
+                            PWD_EXPIRYWARN_MAIL_TEMPLATE,
+                            user_data,
+                            raise_refused=True,
                         )
-                    except smtplib.SMTPRecipientsRefused as smtp_err:
-                        self.logger.error('Recipient %r rejected: %s', to_addr, smtp_err)
+                    except SMTPRecipientsRefused:
                         continue
                     else:
                         notified_users.append(user_data['user_uid'])
@@ -243,6 +195,15 @@ class AEDIRPwdJob(aedir.process.AEProcess):
                     len(notified_users),
                     ', '.join(notified_users),
                 )
+
+    def run_worker(self, state):
+        """
+        Run the job
+        """
+        current_time = time.time()
+        self._send_password_expiry_notifications(current_time)
+        return ldap0.functions.strf_secs(current_time)
+        # end of run_worker()
 
 
 def main():
