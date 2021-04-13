@@ -242,7 +242,8 @@ class AEGroupUpdater(aedir.process.AEProcess):
             res.dn_s.lower()
             for res in ldap_result
         ])
-        return res # end of _constrained_persons()
+        return res
+        # end of _constrained_persons()
 
     def empty_archived_groups(self):
         """
