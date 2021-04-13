@@ -9,7 +9,6 @@ from aePerson to aeUser entries
 #-----------------------------------------------------------------------
 
 # Modules from Python's standard library
-import sys
 import time
 
 # from ldap0 package
@@ -23,7 +22,6 @@ import aedir
 import aedir.process
 
 from .__about__ import __version__
-from .groups import AEGroupUpdater
 
 #-----------------------------------------------------------------------
 # Constants (configuration)

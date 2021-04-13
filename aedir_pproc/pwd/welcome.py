@@ -7,11 +7,6 @@ aedir_pproc.pwd.welcome -- Send welcome e-mail to new users which have not set a
 import time
 import smtplib
 import email.utils
-from socket import getfqdn
-
-# mailutil is optional dependency of module aedir
-# => provoke first fail here before doing anything else
-import mailutil
 
 # from ldap0 package
 import ldap0
