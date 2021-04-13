@@ -385,7 +385,9 @@ class AEGroupUpdater(aedir.process.AEProcess):
                                 if int(deref_res.entry_s['aeStatus'][0]) <= 0:
                                     new_members.add(deref_res.dn_s)
                                     try:
-                                        new_member_attr_values.add(deref_res.entry_s[member_user_attr][0])
+                                        new_member_attr_values.add(
+                                            deref_res.entry_s[member_user_attr][0]
+                                        )
                                     except KeyError:
                                         self.logger.error(
                                             'Attribute %r not found in entry %r: %r',

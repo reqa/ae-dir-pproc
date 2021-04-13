@@ -1160,7 +1160,12 @@ class ViewUser(BaseApp):
             self.logger.warning('LDAP error: %s', ldap_err)
             res = RENDER.error('Internal error!')
         else:
-            self.logger.debug('Show user %r (%r) to %r.', self.form.d.othername, other.dn_s, self.form.d.username)
+            self.logger.debug(
+                'Show user %r (%r) to %r.',
+                self.form.d.othername,
+                other.dn_s,
+                self.form.d.username,
+            )
             res = RENDER.viewuser_action(
                 other.entry_s['displayName'][0],
                 'msPwdResetObject' in other.entry_s['objectClass'],

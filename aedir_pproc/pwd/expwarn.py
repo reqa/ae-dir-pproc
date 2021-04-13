@@ -154,7 +154,9 @@ class AEDIRPwdJob(aedir.process.AEProcess):
             filterstr_inputs_dict = {
                 'pwdpolicy': pwd_policy,
                 'pwdchangedtime_ge': ldap0.functions.strf_secs(current_time-pwd_max_age),
-                'pwdchangedtime_le': ldap0.functions.strf_secs(current_time-(pwd_max_age-pwd_expire_warning)),
+                'pwdchangedtime_le': ldap0.functions.strf_secs(
+                    current_time-(pwd_max_age-pwd_expire_warning)
+                ),
             }
             self.logger.debug('filterstr_inputs_dict = %s', filterstr_inputs_dict)
 
@@ -173,7 +175,11 @@ class AEDIRPwdJob(aedir.process.AEProcess):
 
             for res in ldap_results:
                 to_addr = res.entry_s['mail'][0]
-                self.logger.debug('Prepare password expiry notification for %r sent to %r', res.dn_s, to_addr)
+                self.logger.debug(
+                    'Prepare password expiry notification for %r sent to %r',
+                    res.dn_s,
+                    to_addr,
+                )
                 pwd_expire_warning_list.append({
                     'user_uid': res.entry_s['uid'][0],
                     'user_cn': res.entry_s.get('cn', [''])[0],
