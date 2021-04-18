@@ -3,14 +3,11 @@
 aedir_pproc.pwd.expreset - Remove expired msPwdResetObject attributes
 """
 
-# from Python's standard lib
 import time
 
-# from ldap0 package
 import ldap0
 import ldap0.functions
 
-# the separate python-aedir module
 import aedir.process
 
 # Import constants from configuration module

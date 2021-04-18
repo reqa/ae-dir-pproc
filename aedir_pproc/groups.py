@@ -9,7 +9,6 @@ aedir_pproc.groups - Performs two tasks:
 # Imports
 #-----------------------------------------------------------------------
 
-# from ldap0 package
 import ldap0
 import ldap0.base
 import ldap0.filter

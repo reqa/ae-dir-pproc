@@ -8,10 +8,8 @@ from aePerson to aeUser entries
 # Imports
 #-----------------------------------------------------------------------
 
-# Modules from Python's standard library
 import time
 
-# from ldap0 package
 import ldap0
 import ldap0.modlist
 import ldap0.functions

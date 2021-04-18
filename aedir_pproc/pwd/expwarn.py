@@ -3,19 +3,15 @@
 aedir_pproc.pwd.expwarn - send password expiry warnings via e-mail
 """
 
-# from Python's standard lib
 import os
 import time
 from smtplib import SMTPRecipientsRefused
 
-# from ldap0
 import ldap0
 import ldap0.functions
 
-# the separate python-aedir module
 import aedir.process
 
-# Import constants from configuration module
 from aedirpwd_cnf import (
     APP_PATH_PREFIX,
     SMTP_DEBUGLEVEL,

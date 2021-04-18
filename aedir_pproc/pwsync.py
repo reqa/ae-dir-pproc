@@ -10,7 +10,6 @@ and sends the clear-text password to e.g. MS AD
 # Imports
 #-----------------------------------------------------------------------
 
-# from Python's standard lib
 import logging
 import os
 import sys
@@ -42,7 +41,6 @@ from slapdsock.service import SlapdSockThreadingServer
 
 from aedir import init_logger
 
-# local modules
 from .__about__ import __version__
 
 #-----------------------------------------------------------------------

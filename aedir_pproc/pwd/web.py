@@ -3,7 +3,6 @@
 aedir_pproc.pwd.web - AE-DIR password self-service web application
 """
 
-# from Python's standard lib
 import re
 import sys
 import os
@@ -15,10 +14,8 @@ import logging
 from urllib.parse import quote_plus as url_quote_plus
 import email.utils
 
-# web.py
 import web
 
-# from ldap0 package
 import ldap0
 import ldap0.functions
 from ldap0.filter import escape_str as escape_filter
@@ -29,10 +26,8 @@ from ldap0.controls.sessiontrack import SESSION_TRACKING_FORMAT_OID_USERNAME
 from ldap0.controls.deref import DereferenceControl
 from ldap0.pw import random_string
 
-# mail utility module
 import mailutil
 
-# AE-DIR module
 import aedir
 
 # Import constants from configuration module
