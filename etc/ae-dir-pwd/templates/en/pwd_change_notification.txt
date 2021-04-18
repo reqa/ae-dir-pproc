@@ -1,0 +1,16 @@
+Dear {user_cn},
+
+the password of your Æ-DIR personal account was changed.
+
+If you did that yourself everything is ok.
+
+You can check whether it works:
+
+https://{web_ctx_host}{app_path_prefix}/checkpw?username={username}
+
+Security advice:
+In case you did not know about this password change you should contact
+the administrators immediately! They can investigate whether
+someone else abused your account.
+
+Your Æ admins
