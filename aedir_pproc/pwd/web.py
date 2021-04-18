@@ -372,7 +372,6 @@ class Default:
         handle GET request by returning default entry page
         """
         return RENDER.default()
-        # end of Default.GET()
 
 
 class BaseApp(Default):
@@ -532,8 +531,7 @@ class CheckPassword(BaseApp):
         except UnicodeError as err:
             self.logger.warning('Invalid input: %s', err)
             return RENDER.checkpw_form('', 'Invalid input')
-        else:
-            return RENDER.checkpw_form(get_input.username, '')
+        return RENDER.checkpw_form(get_input.username, '')
 
     def handle_user_request(self, user_dn, user_entry):
         """
@@ -639,9 +637,7 @@ class ChangePassword(BaseApp):
         except UnicodeError as err:
             self.logger.warning('Invalid input: %s', err)
             return RENDER.changepw_form('', 'Invalid input')
-        else:
-            return RENDER.changepw_form(get_input.username, '')
-        # end of ChangePassword.GET()
+        return RENDER.changepw_form(get_input.username, '')
 
     def _check_pw_input(self, user_entry):
         if self.form.d.newpassword1 != self.form.d.newpassword2:
@@ -742,9 +738,7 @@ class RequestPasswordReset(BaseApp):
         except UnicodeError as err:
             self.logger.warning('Invalid input: %s', err)
             return RENDER.requestpw_form('', 'Invalid input')
-        else:
-            return RENDER.requestpw_form(get_input.username, '')
-        # end of RequestPasswordReset.GET()
+        return RENDER.requestpw_form(get_input.username, '')
 
     def _get_admin_mailaddrs(self, user_dn):
         try:
@@ -1115,7 +1109,6 @@ class ViewUser(BaseApp):
             self.logger.warning('Invalid input: %s', err)
             return RENDER.viewuser_form('', '', 'Invalid input')
         return RENDER.viewuser_form(get_input.username, get_input.othername, '')
-        # end of ViewUser.GET()
 
     def handle_user_request(self, user_dn, user_entry):
         """
