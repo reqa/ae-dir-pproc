@@ -1,0 +1,41 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+  <h1>Request password reset</h1>
+
+  {% if message %}
+    <p class="message">{{ message }}</p>
+  {% endif %}
+
+  <form 
+    method="POST" 
+    action="{{ config['APPLICATION_ROOT'] }}{{ url_for('requestpw') }}"
+    enctype="application/x-www-form-urlencoded"
+    accept-charset="utf-8"
+  >
+
+    <fieldset>
+      <table>
+        <tr>
+          <th>
+            User name:
+          </th>
+          <td>
+            <input name="username" value="{{ username }}" size="25">
+          </td>
+        </tr>
+        <tr>
+          <th>
+            E-mail address:
+          </th>
+          <td>
+            <input name="email" value="" size="25" type="email">
+          </td>
+        </tr>
+      </table>
+      <input type="submit" class="submit" name="submit" value="Request">
+    </fieldset>
+
+
+  </form>
+{% endblock content %}

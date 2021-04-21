@@ -13,6 +13,8 @@ https://{web_ctx_host}{app_path_prefix}/changepw?username={user_uid}
 If it's already too late you have to follow the instructions in section
 "Password reset" below.
 
+Your Æ admins.
+
 --------------------------- Account details ----------------------------
 
 User name: {user_uid}
@@ -40,7 +42,3 @@ the user guide:
 https://{web_ctx_host}/pwd.html#reset-procedure
 
 ------------------------------------------------------------------------
-
-Have fun!
-
-Your Æ admins.

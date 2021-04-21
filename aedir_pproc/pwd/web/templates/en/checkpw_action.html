@@ -1,0 +1,18 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+  <h1>Password check for {{ username }}</h1>
+
+  <p>
+    Password of LDAP entry
+  </p>
+  <p class="userDN">
+    {{ userdn }}
+  </p>
+  <p>
+    was successfully checked.
+  </p>
+  <p>
+    Valid until: {{ valid_until }}
+  </p>
+{% endblock content %}

@@ -1,0 +1,19 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+  <h1>Password reset for {{ username }}</h1>
+
+  <p>
+    New password of LDAP entry
+  </p>
+  <p class="userDN">
+    {{ userdn }}
+  </p>
+  <p>
+    was successfully set.
+  </p>
+
+  <p class="tip">
+    Try to <a href="checkpw?username={{ username }}">check new password</a> right now.
+  </p>
+{% endblock content %}

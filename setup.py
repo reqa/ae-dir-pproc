@@ -36,7 +36,10 @@ setup(
         'setuptools',
         'aedir>=1.4.6',
         'mailutil>=0.4.0',
-        'web.py>=0.40',
+        'Werkzeug>=1.0.0',
+        'Flask',
+        'WTForms',
+        'Jinja2',
     ],
     zip_safe=False,
 )

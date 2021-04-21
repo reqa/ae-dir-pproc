@@ -1,0 +1,24 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+  <h1>Password change for {{ username }}</h1>
+
+  <p>
+    New password of LDAP entry
+  </p>
+  <p class="userDN">
+    {{ userdn }}
+  </p>
+  <p>
+    successfully set.
+  </p>
+
+  <ul class="tip">
+    <li>
+      Try to <a href="checkpw?username={{ username }}">check password</a> right now.
+    </li>
+    <li>
+      <a href="/web2ldap/searchform?{{ ldap_uri }}/ou%3Dae-dir????bindname={{ username }}">Login to web2ldap as {{ username }}</a>.
+    </li>
+  </ul>
+{% endblock content %}

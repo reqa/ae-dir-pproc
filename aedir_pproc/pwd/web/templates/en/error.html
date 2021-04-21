@@ -1,0 +1,9 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+  <h1>Error</h1>
+
+  {% if message %}
+    <p class="message">{{ message }}</p>
+  {% endif %}
+{% endblock content %}

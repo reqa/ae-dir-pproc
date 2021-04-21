@@ -1,14 +1,18 @@
-$def with (username,othername,message)
-$var title: View user information
+{% extends 'layout.html' %}
 
-<div id="content">
-
+{% block content %}
   <h1>Change password</h1>
 
-  $if message:
-    <p class="message">$message</p>
+  {% if message %}
+    <p class="message">{{ message }}</p>
+  {% endif %}
 
-  <form method="POST" action="viewuser" enctype="application/x-www-form-urlencoded" accept-charset="utf-8">
+  <form
+    method="POST"
+    action="{{ config['APPLICATION_ROOT'] }}{{ url_for('viewuser') }}"
+    enctype="application/x-www-form-urlencoded"
+    accept-charset="utf-8"
+  >
 
     <fieldset>
       <table>
@@ -17,7 +21,7 @@ $var title: View user information
             Admin user name:
           </th>
           <td>
-            <input name="username" value="$username" size="25" required>
+            <input name="username" value="{{ username }}" size="25">
           </td>
         </tr>
         <tr>
@@ -33,7 +37,7 @@ $var title: View user information
             User name to search:
           </th>
           <td>
-            <input name="othername" value="$othername" size="25" required>
+            <input name="othername" value="{{ othername }}" size="25">
           </td>
         </tr>
       </table>
@@ -46,5 +50,4 @@ $var title: View user information
     <li>Only zone admins are allowed to query reset password of a particular user.</li>
     <li>You might need to provide a 2nd factor with the password!</li>
   </ul>
-
-</div>
+{% endblock content %}

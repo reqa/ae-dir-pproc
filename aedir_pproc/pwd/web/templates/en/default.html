@@ -1,8 +1,6 @@
-$def with ()
-$var title: Password Self Service
+{% extends 'layout.html' %}
 
-<div id="content">
-
+{% block content %}
 <h1>Overview</h1>
 
 <h2>End users</h2>
@@ -26,10 +24,8 @@ $var title: Password Self Service
 </p>
 
 <h2>Zone admins</h2>
-
   <p>
     <a href="viewuser">View user</a>
     e.g. for retrieving reset password.
   </p>
-
-</div>
+{% endblock content %}
