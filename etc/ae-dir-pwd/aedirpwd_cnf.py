@@ -3,6 +3,9 @@
 Configuration module for aedir_pproc.pwd
 """
 
+import os
+import os.path
+
 # LDAP-URL describing the connection parameters and bind information
 PWD_LDAP_URL = 'ldapi://%2Fopt%2Fae-dir%2Frun%2Fslapd%2Fldapi/dc=ae-dir,dc=example,dc=org??sub??trace=0,x-saslmech=EXTERNAL'
 
@@ -22,7 +25,11 @@ FILTERSTR_USER = '(&(objectClass=aeUser)(aeStatus=0)(displayName=*)(mail=*))'
 PWD_RESET_ENABLED = 'TRUE'
 
 # Name of directory containing all the template files
-TEMPLATES_DIRNAME = '/opt/ae-dir/etc/ae-dir-pwd/templates/en/'
+#TEMPLATES_DIRNAME = '/opt/ae-dir/etc/ae-dir-pwd/templates/en/'
+TEMPLATES_DIRNAME = os.path.join(
+    os.getcwd(),
+    'aedir_pproc/pwd/web/templates/en',
+)
 
 # Name of layout template (without the file suffix .html)
 LAYOUT = 'layout'
