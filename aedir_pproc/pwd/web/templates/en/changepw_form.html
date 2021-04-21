@@ -7,10 +7,10 @@
     <p class="message">{{ message }}</p>
   {% endif %}
 
-  <form 
-    method="POST" 
+  <form
+    method="POST"
     action="{{ config['APPLICATION_ROOT'] }}{{ url_for('changepw') }}"
-    enctype="application/x-www-form-urlencoded" 
+    enctype="application/x-www-form-urlencoded"
     accept-charset="utf-8"
   >
 
