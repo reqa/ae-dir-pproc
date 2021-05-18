@@ -973,12 +973,11 @@ class ViewUser(BaseApp):
                 req_ctrls=[VIEWUSER_DEREF_CONTROL, self._sess_track_ctrl(),],
             )
             if other.ctrls:
-                other.entry_b.update(
-                    other.ctrls[0].derefRes['aePerson'][0].entry_b
-                )
-                other.entry_b.update(
-                    other.ctrls[0].derefRes['pwdPolicySubentry'][0].entry_b
-                )
+                for deref_attr in ('aePerson', 'pwdPolicySubentry'):
+                    if deref_attr in other.ctrls[0].derefRes:
+                        other.entry_b.update(
+                            other.ctrls[0].derefRes[deref_attr][0].entry_b
+                        )
             self.logger.debug('Found %r: %r', other.dn_s, other.entry_s)
         except ldap0.INVALID_CREDENTIALS as ldap_err:
             self.logger.warning('Password of %r wrong: %s', user_dn, ldap_err)
