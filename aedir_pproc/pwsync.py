@@ -10,6 +10,7 @@ and sends the clear-text password to e.g. MS AD
 # Imports
 #-----------------------------------------------------------------------
 
+import crypt
 import logging
 import os
 import sys
@@ -17,8 +18,6 @@ import queue
 import threading
 import time
 from collections import OrderedDict
-
-import passlib.context
 
 from pyasn1.type.univ import OctetString, Sequence
 from pyasn1.type.namedtype import NamedTypes, OptionalNamedType
@@ -232,8 +231,11 @@ class PWSyncWorker(threading.Thread, LocalLDAPConn):
         if __debug__:
             self.logger.debug('user_password_hash = %r', user_password_hash)
         # Compare password with local hash in attribute userPassword
-        pw_context = passlib.context.CryptContext(schemes=['sha512_crypt'])
-        return pw_context.verify(new_passwd, user_password_hash)
+        crypt_hash = crypt.crypt(
+            new_passwd,
+            user_password_hash.decode('ascii').rsplit('$', 1)[0],
+        )
+        return user_password_hash == crypt_hash
         # end of _check_password()
 
     def get_target_id(self, source_dn):
