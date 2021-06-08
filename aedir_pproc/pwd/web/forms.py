@@ -5,7 +5,10 @@ aedir_pproc.pwd.web.forms - forms declarations
 
 from wtforms import Form, validators
 from wtforms.fields import StringField, PasswordField, SubmitField
-from wtforms.fields.html5 import EmailField
+try:
+    from wtforms.fields import EmailField
+except ImportError:
+    from wtforms.fields.html5 import EmailField
 
 
 USERNAME_REGEX = '^[a-zA-Z0-9._-]+$'
