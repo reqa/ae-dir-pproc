@@ -18,7 +18,7 @@ TEMP_PASSWORD_REGEX = '^[a-zA-Z0-9_-]*$'
 USERNAME_FIELD = StringField(
     'User name',
     [
-        validators.Length(min=4, max=25),
+        validators.Length(min=2, max=40),
         validators.InputRequired(),
         validators.Regexp(USERNAME_REGEX),
     ],
