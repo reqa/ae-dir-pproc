@@ -12,7 +12,6 @@ except ImportError:
 
 
 USERNAME_REGEX = '^[a-zA-Z0-9._-]+$'
-#TEMP_PASSWORD_REGEX = '^[{0}]*$'.format(re.escape(current_app.config['PWD_TMP_CHARS']))
 TEMP_PASSWORD_REGEX = '^[a-zA-Z0-9_-]*$'
 
 USERNAME_FIELD = StringField(
@@ -112,7 +111,7 @@ class ViewUserForm(Form):
     othername = StringField(
         'View user name',
         [
-            validators.Length(min=4, max=25),
+            validators.Length(min=2, max=40),
             validators.InputRequired(),
             validators.Regexp(USERNAME_REGEX),
         ],
