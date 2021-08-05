@@ -27,6 +27,7 @@ HTTP_CSP_HEADER = ' '.join((
     "object-src 'none';",
     "script-src 'none';",
     "style-src 'self';",
+    "require-trusted-types-for 'script';",
 ))
 HTTP_PERMISSIONS_POLICY_HEADER = ', '.join((
     'accelerometer=(none)',
