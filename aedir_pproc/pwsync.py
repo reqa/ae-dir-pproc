@@ -26,6 +26,7 @@ from pyasn1.codec.ber import decoder as pyasn1_decoder
 from pyasn1.error import PyAsn1Error
 
 import ldap0
+import ldap0.functions
 from ldap0.res import SearchResultEntry
 from ldap0.dn import DNObj
 from ldap0.functions import strf_secs as ldap_strf_secs
@@ -512,7 +513,7 @@ def run():
         my_logger.error('%s  => abort', err)
         sys.exit(1)
 
-    cacert_filename = ldap0.get_option(ldap0.OPT_X_TLS_CACERTFILE)
+    cacert_filename = ldap0.functions.get_option(ldap0.OPT_X_TLS_CACERTFILE)
     if not cacert_filename:
         my_logger.error('No CA certificate file defined => abort')
         sys.exit(1)
