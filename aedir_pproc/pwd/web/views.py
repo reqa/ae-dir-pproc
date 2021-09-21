@@ -575,89 +575,88 @@ class RequestPasswordReset(BaseApp):
         """
         send e-mails to user and zone-admins
         """
-        smtp_conn = mailutil.smtp_connection(
-            current_app.config['SMTP_URL'],
-            local_hostname=current_app.config['SMTP_LOCALHOSTNAME'],
-            ca_certs=current_app.config['SMTP_TLS_CACERTS'],
-            debug_level=current_app.config['SMTP_DEBUGLEVEL'],
-        )
-        to_addr = user_entry['mail'][0]
         default_headers = (
             ('From', current_app.config['SMTP_FROM']),
             ('Date', email.utils.formatdate(time.time(), True)),
         )
-        #-----------------------------------------------------------------------
-        # First send notification to admin if pwd_admin_len is non-zero
-        #-----------------------------------------------------------------------
         pwd_admin_len = int(
             user_entry.get(
                 'msPwdResetAdminPwLen',
                 [str(current_app.config['PWD_ADMIN_LEN'])]
             )[0]
         )
-        if pwd_admin_len:
-            user_data_admin = {
+
+        with mailutil.smtp_connection(
+                current_app.config['SMTP_URL'],
+                local_hostname=current_app.config['SMTP_LOCALHOSTNAME'],
+                ca_certs=current_app.config['SMTP_TLS_CACERTS'],
+                debug_level=current_app.config['SMTP_DEBUGLEVEL'],
+            ) as smtp_conn:
+
+            if pwd_admin_len:
+                # First send notification to admin
+                #---------------------------------
+                user_data_admin = {
+                    'username': username,
+                    'temppassword2': temp_pwd_clear[len(temp_pwd_clear)-pwd_admin_len:],
+                    'remote_ip': request.remote_addr,
+                    'fromaddr': current_app.config['SMTP_FROM'],
+                    'userdn': user_dn,
+                    'userdispname': user_entry['displayName'][0],
+                    'web_ctx_host': request.host,
+                    'app_path_prefix': current_app.config['APPLICATION_ROOT'],
+                    'ldap_uri': self.ldap_conn.ldap_url_obj.connect_uri(),
+                }
+                smtp_message = read_template_file(
+                    current_app.config['EMAIL_TEMPLATE_ADMIN']
+                ).format(**user_data_admin)
+                smtp_subject = current_app.config['EMAIL_SUBJECT_ADMIN'].format(**user_data_admin)
+                admin_addrs = self._get_admin_mailaddrs(user_dn)
+                admin_to = ','.join(sorted(admin_addrs))
+                smtp_conn.send_simple_message(
+                    current_app.config['SMTP_FROM'],
+                    admin_addrs,
+                    'utf-8',
+                    default_headers+(
+                        ('Subject', smtp_subject),
+                        ('To', admin_to),
+                    ),
+                    smtp_message,
+                )
+                self.logger.info('Sent password reset admin notification to %s', admin_to)
+            else:
+                admin_addrs = []
+
+            # Now send (rest of) clear-text password to user
+            #-----------------------------------------------
+            to_addr = user_entry['mail'][0]
+            user_data_user = {
                 'username': username,
-                'temppassword2': temp_pwd_clear[len(temp_pwd_clear)-pwd_admin_len:],
+                'temppassword1': temp_pwd_clear[:len(temp_pwd_clear)-pwd_admin_len],
                 'remote_ip': request.remote_addr,
                 'fromaddr': current_app.config['SMTP_FROM'],
                 'userdn': user_dn,
-                'userdispname': user_entry['displayName'][0],
                 'web_ctx_host': request.host,
                 'app_path_prefix': current_app.config['APPLICATION_ROOT'],
                 'ldap_uri': self.ldap_conn.ldap_url_obj.connect_uri(),
+                'admin_email_addrs': '\n'.join(admin_addrs),
             }
             smtp_message = read_template_file(
-                current_app.config['EMAIL_TEMPLATE_ADMIN']
-            ).format(**user_data_admin)
-            smtp_subject = current_app.config['EMAIL_SUBJECT_ADMIN'].format(**user_data_admin)
-            admin_addrs = self._get_admin_mailaddrs(user_dn)
-            admin_to = ','.join(sorted(admin_addrs))
+                current_app.config['EMAIL_TEMPLATE_PERSONAL']
+            ).format(**user_data_user)
+            smtp_subject = current_app.config['EMAIL_SUBJECT_PERSONAL'].format(**user_data_user)
             smtp_conn.send_simple_message(
                 current_app.config['SMTP_FROM'],
-                admin_addrs,
+                [to_addr],
                 'utf-8',
                 default_headers+(
                     ('Subject', smtp_subject),
-                    ('To', admin_to),
+                    ('To', to_addr),
                 ),
                 smtp_message,
             )
-            self.logger.info('Sent password reset admin notification to %s', admin_to)
-        else:
-            admin_addrs = []
+            self.logger.info('Sent reset password to %s', to_addr)
 
-        #-----------------------------------------------------------------------
-        # Now send (rest of) clear-text password to user
-        #-----------------------------------------------------------------------
-
-        user_data_user = {
-            'username': username,
-            'temppassword1': temp_pwd_clear[:len(temp_pwd_clear)-pwd_admin_len],
-            'remote_ip': request.remote_addr,
-            'fromaddr': current_app.config['SMTP_FROM'],
-            'userdn': user_dn,
-            'web_ctx_host': request.host,
-            'app_path_prefix': current_app.config['APPLICATION_ROOT'],
-            'ldap_uri': self.ldap_conn.ldap_url_obj.connect_uri(),
-            'admin_email_addrs': '\n'.join(admin_addrs),
-        }
-        smtp_message = read_template_file(
-            current_app.config['EMAIL_TEMPLATE_PERSONAL']
-        ).format(**user_data_user)
-        smtp_subject = current_app.config['EMAIL_SUBJECT_PERSONAL'].format(**user_data_user)
-        smtp_conn.send_simple_message(
-            current_app.config['SMTP_FROM'],
-            [to_addr],
-            'utf-8',
-            default_headers+(
-                ('Subject', smtp_subject),
-                ('To', to_addr),
-            ),
-            smtp_message,
-        )
-        self.logger.info('Sent reset password to %s', to_addr)
-        smtp_conn.quit()
         # end of RequestPasswordReset._send_pw()
 
     def handle_user_request(self, user_dn, user_entry):
