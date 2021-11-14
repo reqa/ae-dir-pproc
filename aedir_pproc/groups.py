@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: ascii -*-
 """
 aedir_pproc.groups - Performs two tasks:
 1. Removes inactive members from static group entries referenced by 'memberOf'.
@@ -111,24 +111,24 @@ class AEGroupUpdater(aedir.process.AEProcess):
                 )
             except ldap0.LDAPError as ldap_error:
                 self.logger.error(
-                    u'LDAPError modifying %r: %s mod_list = %r',
+                    'LDAPError modifying %r: %s mod_list = %r',
                     group_dn,
                     ldap_error,
                     mod_list,
                 )
             else:
                 self.logger.debug(
-                    u'Updated %r: mod_list = %r',
+                    'Updated %r: mod_list = %r',
                     group_dn,
                     mod_list,
                 )
                 self.logger.info(
                     (
-                        u'Updated member values of group entry %r: '
-                        u'add_members=%d '
-                        u'add_member_attr_values=%d '
-                        u'remove_members=%d '
-                        u'remove_member_attr_values=%d'
+                        'Updated member values of group entry %r: '
+                        'add_members=%d '
+                        'add_member_attr_values=%d '
+                        'remove_members=%d '
+                        'remove_member_attr_values=%d'
                     ),
                     group_dn,
                     len(add_members),
@@ -137,7 +137,7 @@ class AEGroupUpdater(aedir.process.AEProcess):
                     len(remove_member_attr_values),
                 )
         else:
-            self.logger.debug(u'Nothing to be done with %r', group_dn)
+            self.logger.debug('Nothing to be done with %r', group_dn)
         # end of _update_members()
 
     def fix_static_groups(self):
@@ -270,14 +270,14 @@ class AEGroupUpdater(aedir.process.AEProcess):
                     self.ldap_conn.modify_s(group.dn_s, mod_list)
                 except ldap0.LDAPError as ldap_error:
                     self.logger.error(
-                        u'LDAPError modifying %r: %s mod_list = %r',
+                        'LDAPError modifying %r: %s mod_list = %r',
                         group.dn_s,
                         ldap_error,
                         mod_list,
                     )
                 else:
                     self.logger.info(
-                        u'Removed all member attributes from %r: mod_list = %r',
+                        'Removed all member attributes from %r: mod_list = %r',
                         group.dn_s,
                         mod_list,
                     )
@@ -398,7 +398,7 @@ class AEGroupUpdater(aedir.process.AEProcess):
 
                 except ldap0.LDAPError as ldap_error:
                     self.logger.error(
-                        u'LDAPError searching members for %r with %r and %r: %s',
+                        'LDAPError searching members for %r with %r and %r: %s',
                         dyn_group.dn_s,
                         member_url,
                         dyn_group_filter,

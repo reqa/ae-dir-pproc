@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: ascii -*-
 """
 aedir_pproc.persattrs - Sync the personnel attributes (cn, sn, givenName, mail)
 from aePerson to aeUser entries

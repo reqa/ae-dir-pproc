@@ -51,7 +51,7 @@ PWD_ADMIN_LEN = 8
 # Where to send admin notification if PWD_ADMIN_LEN is non-zero
 # and responsible zone admins cannot be determined
 PWD_ADMIN_MAILTO = [
-  u'ae-admins@example.com',
+    'ae-admins@example.com',
 ]
 
 # Number of seconds a temporary password is valid
@@ -61,15 +61,15 @@ PWD_EXPIRETIMESPAN = 600
 PWD_TMP_HASH_ALGO = '2.16.840.1.101.3.4.2.3' # sha512 [RFC4055]
 
 # Characters used for the temporary passwords
-PWD_TMP_CHARS = u'abcdefghijkmnopqrstuvwxyzABCDEFGHIJKLMNPQRSTUVWXYZ23456789'
+PWD_TMP_CHARS = 'abcdefghijkmnopqrstuvwxyzABCDEFGHIJKLMNPQRSTUVWXYZ23456789'
 
 # Filename of template for sending e-mail message to user
-EMAIL_SUBJECT_PERSONAL = u'Your temporary reset password for "{username}"'
+EMAIL_SUBJECT_PERSONAL = 'Your temporary reset password for "{username}"'
 EMAIL_TEMPLATE_PERSONAL = TEMPLATES_DIRNAME+'requestpw_user.txt'
 
 # Filename of template for sending e-mail message to admin
 # with second portion of clear-text password
-EMAIL_SUBJECT_ADMIN = u'Password reset for "{username}" needs help'
+EMAIL_SUBJECT_ADMIN = 'Password reset for "{username}" needs help'
 EMAIL_TEMPLATE_ADMIN = TEMPLATES_DIRNAME+'requestpw_admin.txt'
 
 # SMTP server used as smart host (SMTP relay)
@@ -127,7 +127,7 @@ FILTERSTR_NO_WELCOME_YET = (
 WELCOME_OLDEST_TIMESPAN = 86400.0
 
 # E-Mail subject for notification message
-WELCOME_EMAIL_SUBJECT = u'New Æ-DIR account "{user_uid}" added/activated for {user_cn}'
+WELCOME_EMAIL_SUBJECT = 'New Æ-DIR account "{user_uid}" added/activated for {user_cn}'
 # E-Mail body template file for notification message
 WELCOME_EMAIL_TEMPLATE = '/opt/ae-dir/etc/ae-dir-pwd/templates/en/welcome_user_email.txt'
 

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: ascii -*-
 """
 aedir_pproc.pwd.expwarn - send password expiry warnings via e-mail
 """
@@ -63,7 +63,7 @@ PWD_EXPIRYWARN_FILTER_TMPL = (
 FILTERSTR_USER = '(&(objectClass=aeUser)(aeStatus=0)(displayName=*)(mail=*))'
 
 # E-Mail subject for notification message
-PWD_EXPIRYWARN_MAIL_SUBJECT = u'Password of Æ-DIR account "{user_uid}" will expire soon!'
+PWD_EXPIRYWARN_MAIL_SUBJECT = 'Password of Æ-DIR account "{user_uid}" will expire soon!'
 # E-Mail body template file for notification message
 PWD_EXPIRYWARN_MAIL_TEMPLATE = os.path.join(TEMPLATES_DIRNAME, 'pwd_expiry_warning.txt')
 

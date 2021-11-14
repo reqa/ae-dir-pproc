@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: ascii -*-
 """
 aedir_pproc.pwd.welcome -- Send welcome e-mail to new users which have not set a password yet
 """
