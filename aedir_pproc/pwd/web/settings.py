@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: ascii -*-
 """
 aedir_pproc.pwd.web.settings - Configuration defaults
 """
@@ -139,7 +139,7 @@ FILTERSTR_NO_WELCOME_YET = (
 WELCOME_OLDEST_TIMESPAN = 86400.0
 
 # E-Mail subject for notification message
-WELCOME_EMAIL_SUBJECT = 'New Æ-DIR account "{user_uid}" added/activated for {user_cn}'
+WELCOME_EMAIL_SUBJECT = 'New \xC6-DIR account "{user_uid}" added/activated for {user_cn}'
 # E-Mail body template file for notification message
 WELCOME_EMAIL_TEMPLATE = '/opt/ae-dir/etc/ae-dir-pwd/templates/en/welcome_user_email.txt'
 

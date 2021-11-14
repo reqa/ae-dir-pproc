@@ -63,7 +63,7 @@ PWD_EXPIRYWARN_FILTER_TMPL = (
 FILTERSTR_USER = '(&(objectClass=aeUser)(aeStatus=0)(displayName=*)(mail=*))'
 
 # E-Mail subject for notification message
-PWD_EXPIRYWARN_MAIL_SUBJECT = 'Password of Æ-DIR account "{user_uid}" will expire soon!'
+PWD_EXPIRYWARN_MAIL_SUBJECT = 'Password of \xC6-DIR account "{user_uid}" will expire soon!'
 # E-Mail body template file for notification message
 PWD_EXPIRYWARN_MAIL_TEMPLATE = os.path.join(TEMPLATES_DIRNAME, 'pwd_expiry_warning.txt')
 

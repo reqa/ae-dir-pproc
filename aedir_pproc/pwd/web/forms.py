@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: ascii -*-
 """
 aedir_pproc.pwd.web.forms - forms declarations
 """

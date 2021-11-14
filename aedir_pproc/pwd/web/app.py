@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: ascii -*-
 """
 aedir_pproc.pwd.web.app - the application entry point
 """

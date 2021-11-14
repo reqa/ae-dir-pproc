@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: ascii -*-
 """
 aedir_pproc.pwd.web - password self-service web application
 """
