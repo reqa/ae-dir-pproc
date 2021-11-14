@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: ascii -*-
 """
 package/install aedir_pproc
 """
@@ -18,14 +18,14 @@ setup(
     name=PYPI_NAME,
     license=__about__.__license__,
     version=__about__.__version__,
-    description='Tools for status, group and attrs updates in AE-DIR',
+    description='Tools for status, group and attrs updates in \xC6-DIR',
     author=__about__.__author__,
     author_email=__about__.__mail__,
     maintainer=__about__.__author__,
     maintainer_email=__about__.__mail__,
     url='https://www.ae-dir.com/',
     download_url='https://pypi.org/project/%s/#files' % (PYPI_NAME),
-    keywords=['LDAP', 'LDAPv3', 'OpenLDAP', 'AE-DIR', 'Æ-DIR'],
+    keywords=['LDAP', 'LDAPv3', 'OpenLDAP', '\xC6-DIR', 'AE-DIR'],
     packages=find_packages(exclude=['tests']),
     package_dir={'': '.'},
     test_suite='tests',
