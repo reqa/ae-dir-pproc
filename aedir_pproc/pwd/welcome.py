@@ -100,6 +100,7 @@ class AEWelcomeMailer(aedir.process.AEProcess):
                 )
                 msg_attrs = {
                     'ldap_uri': str(self.ldap_conn.ldap_url_obj.connect_uri()),
+                    'search_base': self.ldap_conn.search_base,
                     'user_uid': ldap_res.entry_s['uid'][0],
                     'user_cn': ldap_res.entry_s.get('cn', [''])[0],
                     'user_displayname': ldap_res.entry_s.get('displayName', [''])[0],
