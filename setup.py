@@ -25,6 +25,10 @@ setup(
     maintainer_email=__about__.__mail__,
     url='https://www.ae-dir.com/',
     download_url='https://pypi.org/project/%s/#files' % (PYPI_NAME),
+    project_urls={
+        'Code': 'https://code.stroeder.com/AE-DIR/ae-dir-pproc',
+        'Issue tracker': 'https://code.stroeder.com/AE-DIR/ae-dir-pproc/issues',
+    },
     keywords=['LDAP', 'LDAPv3', 'OpenLDAP', '\xC6-DIR', 'AE-DIR'],
     packages=find_packages(exclude=['tests']),
     package_dir={'': '.'},
