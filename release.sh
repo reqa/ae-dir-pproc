@@ -23,5 +23,7 @@ git push --tags
 
 # build source distribution and push to PyPI
 # (release defined in setup.cfg)
-python3 setup.py sdist
-python3 -m twine upload -s dist
+python3 setup.py \
+  clean --all \
+  sdist --formats=gztar
+python3 -m twine upload -s "dist/aedir_pproc-${RELEASE}.tar.gz"
