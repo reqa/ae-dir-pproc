@@ -23,4 +23,5 @@ git push --tags
 
 # build source distribution and push to PyPI
 # (release defined in setup.cfg)
-python3 setup.py release
+python3 setup.py sdist
+python3 -m twine upload -s dist
