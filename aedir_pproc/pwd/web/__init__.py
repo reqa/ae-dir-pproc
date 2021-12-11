@@ -58,6 +58,9 @@ HTTP_HEADERS = (
     ('X-Content-Security-Policy', HTTP_CSP_HEADER),
     ('Referrer-Policy', 'same-origin'),
     ('Permissions-Policy', HTTP_PERMISSIONS_POLICY_HEADER),
+    ('Cross-Origin-Embedder-Policy', 'require-corp'),
+    ('Cross-Origin-Opener-Policy', 'same-origin'),
+    ('Cross-Origin-Resource-Policy', 'same-site'),
 )
 
 #---------------------------------------------------------------------------
