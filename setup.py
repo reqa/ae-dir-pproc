@@ -7,11 +7,13 @@ import sys
 import os
 from setuptools import setup, find_packages
 
-PYPI_NAME = 'aedir_pproc'
+PYPI_NAME = 'ae-dir-pproc'
+
+MOD_NAME = 'aedir_pproc'
 
 BASEDIR = os.path.dirname(os.path.realpath(__file__))
 
-sys.path.insert(0, os.path.join(BASEDIR, PYPI_NAME))
+sys.path.insert(0, os.path.join(BASEDIR, MOD_NAME))
 import __about__
 
 setup(
@@ -26,8 +28,8 @@ setup(
     url='https://www.ae-dir.com/',
     download_url='https://pypi.org/project/%s/#files' % (PYPI_NAME),
     project_urls={
-        'Code': 'https://code.stroeder.com/AE-DIR/ae-dir-pproc',
-        'Issue tracker': 'https://code.stroeder.com/AE-DIR/ae-dir-pproc/issues',
+        'Code': 'https://code.stroeder.com/AE-DIR/%s' % (PYPI_NAME),
+        'Issue tracker': 'https://code.stroeder.com/AE-DIR/%s/issues' % (PYPI_NAME),
     },
     keywords=['LDAP', 'LDAPv3', 'OpenLDAP', '\xC6-DIR', 'AE-DIR'],
     packages=find_packages(exclude=['tests']),
