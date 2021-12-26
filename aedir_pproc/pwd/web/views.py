@@ -237,7 +237,8 @@ class BaseApp(Default):
         return user.dn_s, user.entry_s
         # end of BaseApp.search_user_entry()
 
-    def smtp_conn(self):
+    @staticmethod
+    def smtp_conn():
         """
         opens and returns SMTP connection object
         """
@@ -248,7 +249,6 @@ class BaseApp(Default):
             debug_level=current_app.config['SMTP_DEBUGLEVEL'],
         )
 
-    
     def _send_changepw_notification(self, username, user_dn, user_entry):
         """
         send e-mail to user to notify about a password change
