@@ -26,4 +26,4 @@ git push --tags
 python3 setup.py \
   clean --all \
   sdist --formats=gztar
-python3 -m twine upload -s "dist/aedir_pproc-${RELEASE}.tar.gz"
+python3 -m twine upload -s "dist/ae-dir-pproc-${RELEASE}.tar.gz"
