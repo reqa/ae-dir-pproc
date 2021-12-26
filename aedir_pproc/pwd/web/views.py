@@ -253,8 +253,12 @@ class BaseApp(Default):
         """
         send e-mail to user to notify about a password change
         """
-        if user_entry.get('msPwdChangeNotification', ['FALSE'])[0] == 'FALSE':
-            self.logger.debug('No notification e-mail for password change.')
+        notification_enabled = user_entry.get(
+            'msPwdChangeNotification',
+            [str(current_app.config['CHANGEPW_NOTIFICATION_ENABLED'])]
+        )[0].upper() == 'TRUE'
+        if not notification_enabled:
+            self.logger.debug('Notification for password change disabled => no e-mail')
             return
         default_headers = (
             ('From', current_app.config['SMTP_FROM']),

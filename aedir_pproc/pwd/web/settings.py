@@ -95,6 +95,9 @@ EMAIL_TEMPLATE_ADMIN = os.path.join(TEMPLATES_DIRNAME, 'requestpw_admin.txt')
 EMAIL_SUBJECT_NOTIFICATION = 'Password of your account "{username}" was changed!'
 EMAIL_TEMPLATE_NOTIFICATION = os.path.join(TEMPLATES_DIRNAME, 'changepw_notification.txt')
 
+# Specifies whether a user shall be informed about a password change via e-mail
+CHANGEPW_NOTIFICATION_ENABLED = False
+
 # SMTP server used as smart host (SMTP relay)
 SMTP_URL = 'smtp://mail.example.com/?STARTTLS'
 
