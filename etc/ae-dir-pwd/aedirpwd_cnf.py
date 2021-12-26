@@ -63,14 +63,17 @@ PWD_TMP_HASH_ALGO = '2.16.840.1.101.3.4.2.3' # sha512 [RFC4055]
 # Characters used for the temporary passwords
 PWD_TMP_CHARS = 'abcdefghijkmnopqrstuvwxyzABCDEFGHIJKLMNPQRSTUVWXYZ23456789'
 
-# Filename of template for sending e-mail message to user
+# Filename of template for sending reset password to user
 EMAIL_SUBJECT_PERSONAL = 'Your temporary reset password for "{username}"'
-EMAIL_TEMPLATE_PERSONAL = TEMPLATES_DIRNAME+'requestpw_user.txt'
+EMAIL_TEMPLATE_PERSONAL = os.path.join(TEMPLATES_DIRNAME, 'requestpw_user.txt')
 
-# Filename of template for sending e-mail message to admin
-# with second portion of clear-text password
+# Filename of template for sending password reset info to admin
 EMAIL_SUBJECT_ADMIN = 'Password reset for "{username}" needs help'
-EMAIL_TEMPLATE_ADMIN = TEMPLATES_DIRNAME+'requestpw_admin.txt'
+EMAIL_TEMPLATE_ADMIN = os.path.join(TEMPLATES_DIRNAME, 'requestpw_admin.txt')
+
+# Filename of template for sending password change notification to user
+EMAIL_SUBJECT_NOTIFICATION = 'Password of your account "{username}" was changed!'
+EMAIL_TEMPLATE_NOTIFICATION = os.path.join(TEMPLATES_DIRNAME, 'changepw_notification.txt')
 
 # SMTP server used as smart host (SMTP relay)
 SMTP_URL = 'smtp://mail.example.com/?STARTTLS'
@@ -135,3 +138,8 @@ WELCOME_EMAIL_TEMPLATE = '/opt/ae-dir/etc/ae-dir-pwd/templates/en/welcome_user_e
 WELCOME_SUCCESSFUL_MOD = [
     (1, b'aeTag', [b'pub-tag-no-welcome-yet'])
 ]
+
+# E-Mail subject for notification message
+WELCOME_EMAIL_SUBJECT = 'New Æ-DIR account "{user_uid}" added/activated for {user_cn}'
+# E-Mail body template file for notification message
+WELCOME_EMAIL_TEMPLATE = '/opt/ae-dir/etc/ae-dir-pwd/templates/en/welcome_user_email.txt'

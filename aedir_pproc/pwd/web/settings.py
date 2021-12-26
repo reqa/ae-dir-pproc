@@ -3,6 +3,7 @@
 aedir_pproc.pwd.web.settings - Configuration defaults
 """
 
+import os.path
 import secrets
 
 # URL path prefix used when generating URLs in e-mails
@@ -55,7 +56,7 @@ FILTERSTR_USER = '(&(objectClass=aeUser)(aeStatus=0)(displayName=*)(mail=*))'
 PWD_RESET_ENABLED = 'TRUE'
 
 # Name of directory containing all the template files
-TEMPLATES_DIRNAME = 'templates/en/'
+TEMPLATES_DIRNAME = 'templates/en'
 
 # Format string for displaying date and time
 TIME_DISPLAY_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -82,14 +83,17 @@ PWD_TMP_HASH_ALGO = '2.16.840.1.101.3.4.2.3' # sha512 [RFC4055]
 # Characters used for the temporary passwords
 PWD_TMP_CHARS = 'abcdefghijkmnopqrstuvwxyzABCDEFGHIJKLMNPQRSTUVWXYZ23456789'
 
-# Filename of template for sending e-mail message to user
+# Filename of template for sending reset password to user
 EMAIL_SUBJECT_PERSONAL = 'Your temporary reset password for "{username}"'
-EMAIL_TEMPLATE_PERSONAL = TEMPLATES_DIRNAME+'requestpw_user.txt'
+EMAIL_TEMPLATE_PERSONAL = os.path.join(TEMPLATES_DIRNAME, 'requestpw_user.txt')
 
-# Filename of template for sending e-mail message to admin
-# with second portion of clear-text password
+# Filename of template for sending password reset info to admin
 EMAIL_SUBJECT_ADMIN = 'Password reset for "{username}" needs help'
-EMAIL_TEMPLATE_ADMIN = TEMPLATES_DIRNAME+'requestpw_admin.txt'
+EMAIL_TEMPLATE_ADMIN = os.path.join(TEMPLATES_DIRNAME, 'requestpw_admin.txt')
+
+# Filename of template for sending password change notification to user
+EMAIL_SUBJECT_NOTIFICATION = 'Password of your account "{username}" was changed!'
+EMAIL_TEMPLATE_NOTIFICATION = os.path.join(TEMPLATES_DIRNAME, 'changepw_notification.txt')
 
 # SMTP server used as smart host (SMTP relay)
 SMTP_URL = 'smtp://mail.example.com/?STARTTLS'

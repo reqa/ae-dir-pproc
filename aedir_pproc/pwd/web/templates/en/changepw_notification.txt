@@ -1,6 +1,6 @@
-Dear {user_cn},
+Dear user,
 
-the password of your Æ-DIR personal account was changed.
+the password of your Æ-DIR personal account '{username}' was changed.
 
 If you did that yourself everything is ok.
 
@@ -14,3 +14,16 @@ the administrators immediately! They can investigate whether
 someone else abused your account.
 
 Your Æ admins
+
+--------------------------- Account details ----------------------------
+
+User name:
+{username}
+
+Distinguished name of user entry:
+{userdn}
+
+IP address from which password was changed:
+{remote_ip}
+
+------------------------------------------------------------------------

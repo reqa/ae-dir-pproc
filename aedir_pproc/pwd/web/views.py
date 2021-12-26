@@ -76,6 +76,7 @@ PWDPOLICY_DEREF_CONTROL = DereferenceControl(
             'pwdAttribute',
             'pwdMinAge',
             'pwdMinLength',
+            'msPwdChangeNotification',
         ]+PWDPOLICY_EXPIRY_ATTRS+MSPWDRESETPOLICY_ATTRS,
     }
 )
@@ -235,6 +236,57 @@ class BaseApp(Default):
         self.logger.debug('.search_user_entry() returns %r', user.dn_s, user.entry_s)
         return user.dn_s, user.entry_s
         # end of BaseApp.search_user_entry()
+
+    def smtp_conn(self):
+        """
+        opens and returns SMTP connection object
+        """
+        return mailutil.smtp_connection(
+            current_app.config['SMTP_URL'],
+            local_hostname=current_app.config['SMTP_LOCALHOSTNAME'],
+            ca_certs=current_app.config['SMTP_TLS_CACERTS'],
+            debug_level=current_app.config['SMTP_DEBUGLEVEL'],
+        )
+
+    
+    def _send_changepw_notification(self, username, user_dn, user_entry):
+        """
+        send e-mail to user to notify about a password change
+        """
+        if user_entry.get('msPwdChangeNotification', ['FALSE'])[0] == 'FALSE':
+            self.logger.debug('No notification e-mail for password change.')
+            return
+        default_headers = (
+            ('From', current_app.config['SMTP_FROM']),
+            ('Date', email.utils.formatdate(time.time(), True)),
+        )
+
+        with self.smtp_conn() as smtp_conn:
+            to_addr = user_entry['mail'][0]
+            user_data = {
+                'username': username,
+                'remote_ip': request.remote_addr,
+                'userdn': user_dn,
+                'web_ctx_host': request.host,
+                'app_path_prefix': current_app.config['APPLICATION_ROOT'],
+            }
+            smtp_message = read_template_file(
+                current_app.config['EMAIL_TEMPLATE_NOTIFICATION']
+            ).format(**user_data)
+            smtp_subject = current_app.config['EMAIL_SUBJECT_NOTIFICATION'].format(**user_data)
+            smtp_conn.send_simple_message(
+                current_app.config['SMTP_FROM'],
+                [to_addr],
+                'utf-8',
+                default_headers+(
+                    ('Subject', smtp_subject),
+                    ('To', to_addr),
+                ),
+                smtp_message,
+            )
+            self.logger.info('Sent change notification to %s', to_addr)
+
+        # end of BaseApp._send_pw_change_notification()
 
     def _open_ldap_conn(self):
         """
@@ -520,6 +572,7 @@ class ChangePassword(BaseApp):
             self.logger.warning('LDAP error: %s', ldap_err)
             res = render_template('error.html', message='Internal error!')
         else:
+            self._send_changepw_notification(self.form.username.data, user_dn, user_entry)
             self.logger.info('User %r changed own password.', user_dn)
             res = render_template(
                 'changepw_action.html',
@@ -586,12 +639,7 @@ class RequestPasswordReset(BaseApp):
             )[0]
         )
 
-        with mailutil.smtp_connection(
-                current_app.config['SMTP_URL'],
-                local_hostname=current_app.config['SMTP_LOCALHOSTNAME'],
-                ca_certs=current_app.config['SMTP_TLS_CACERTS'],
-                debug_level=current_app.config['SMTP_DEBUGLEVEL'],
-            ) as smtp_conn:
+        with self.smtp_conn() as smtp_conn:
 
             if pwd_admin_len:
                 # First send notification to admin
@@ -917,6 +965,7 @@ class FinishPasswordReset(ChangePassword):
         except ldap0.LDAPError:
             res = render_template('error.html', message='Internal error!')
         else:
+            self._send_changepw_notification(self.form.username.data, user_dn, user_entry)
             self.logger.info('Password reset completed for %r.', user_dn)
             res = render_template(
                 'resetpw_action.html',
