@@ -21,7 +21,15 @@
             User name:
           </th>
           <td>
-            <input name="username" value="{{ username }}" size="25">
+            <input
+              name="username"
+              title="User name of &AElig;-DIR personal account"
+              placeholder="User name of &AElig;-DIR personal account"
+              maxlength="60"
+              size="30"
+              autofocus
+              value="{{ username }}"
+            >
           </td>
         </tr>
         <tr>
@@ -29,7 +37,16 @@
             Password:
           </th>
           <td>
-            <input type="password" name="password" value="" size="60">
+            <input
+              type="password"
+              name="password"
+              autocomplete="current-password"
+              title="User password or password+OTP"
+              placeholder="User password or password+OTP"
+              maxlength="200"
+              size="60"
+              value=""
+            >
           </td>
         </tr>
       </table>

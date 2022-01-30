@@ -21,7 +21,15 @@
             User name:
           </th>
           <td>
-            <input name="username" value="{{ username }}" size="25">
+            <input
+              name="username"
+              title="User name of &AElig;-DIR personal account"
+              placeholder="User name of &AElig;-DIR personal account"
+              maxlength="60"
+              size="30"
+              autofocus
+              value="{{ username }}"
+            >
           </td>
         </tr>
         <tr>
@@ -29,7 +37,16 @@
             Old password:
           </th>
           <td>
-            <input type="password" name="password" value="" size="60">
+            <input
+              type="password"
+              name="password"
+              autocomplete="current-password"
+              title="User password or password+OTP"
+              placeholder="User password or password+OTP"
+              maxlength="200"
+              size="60"
+              value=""
+            >
           </td>
         </tr>
         <tr>
@@ -37,7 +54,7 @@
             New password:
           </th>
           <td>
-            <input type="password" name="newpassword1" value="" size="40">
+            <input type="password" name="newpassword1" autocomplete="new-password" value="" size="40">
           </td>
         </tr>
         <tr>
@@ -45,7 +62,7 @@
             New password (repeat):
           </th>
           <td>
-            <input type="password" name="newpassword2" value="" size="40">
+            <input type="password" name="newpassword2" autocomplete="new-password" value="" size="40">
           </td>
         </tr>
       </table>

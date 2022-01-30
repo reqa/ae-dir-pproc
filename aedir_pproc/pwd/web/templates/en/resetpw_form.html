@@ -15,7 +15,7 @@
   >
 
     <input type="hidden" name="username" value="{{ username }}" size="25">
-    <input type="hidden" name="temppassword1" value="{{ temppassword1 }}" size="25">
+    <input type="hidden" name="temppassword1" autocomplete="one-time-code" value="{{ temppassword1 }}" size="25">
 
     <fieldset>
 
@@ -27,7 +27,7 @@
               Reset password<br>(ask zone admin):
             </th>
             <td>
-               <input name="temppassword2" value="" size="{{ pwd_admin_len }}" maxlength="{{ pwd_admin_len }}">
+               <input name="temppassword2" value="" size="{{ pwd_admin_len }}" autocomplete="one-time-code" maxlength="{{ pwd_admin_len }}">
             </td>
           </tr>
         {% else %}
@@ -39,7 +39,7 @@
             New password:
           </th>
           <td>
-            <input type="password" name="newpassword1" value="" size="20">
+            <input type="password" name="newpassword1" autocomplete="new-password" value="" size="20">
           </td>
         </tr>
         <tr>
@@ -47,7 +47,7 @@
             New password (repeated):
           </th>
           <td>
-            <input type="password" name="newpassword2" value="" size="20">
+            <input type="password" name="newpassword2" autocomplete="new-password" value="" size="20">
           </td>
         </tr>
       </table>

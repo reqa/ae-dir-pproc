@@ -4,7 +4,7 @@ the password of your Æ-DIR personal account '{username}' was changed.
 
 If you did that yourself everything is ok.
 
-You can check whether it works:
+You can check whether your new password works:
 
 https://{web_ctx_host}{app_path_prefix}/checkpw?username={username}
 
