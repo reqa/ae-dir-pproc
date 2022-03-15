@@ -547,7 +547,7 @@ def run():
         pwsync_queue,
     )
     pwsync_worker.ldapi_uri = local_ldap_uri_obj.connect_uri()
-    pwsync_worker.setDaemon(True)
+    pwsync_worker.daemon = True
     pwsync_worker.start()
 
     try:
