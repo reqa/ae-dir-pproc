@@ -3,6 +3,9 @@
 aedir_pproc.pwd.expreset - Remove expired msPwdResetObject attributes
 """
 
+import os
+import os.path
+import sys
 import time
 
 import ldap0
@@ -11,6 +14,7 @@ import ldap0.functions
 import aedir.process
 
 # Import constants from configuration module
+sys.path.append(os.path.dirname(os.environ.get('AEDIRPWD_CFG', '/opt/ae-dir/etc/ae-dir-pwd/aedirpwd_cnf.py')))
 from aedirpwd_cnf import (
     FILTERSTR_EXPIRE,
     PWD_ADMIN_LEN,

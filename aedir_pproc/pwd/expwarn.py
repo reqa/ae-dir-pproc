@@ -4,6 +4,8 @@ aedir_pproc.pwd.expwarn - send password expiry warnings via e-mail
 """
 
 import os
+import os.path
+import sys
 import time
 from smtplib import SMTPRecipientsRefused
 
@@ -12,6 +14,8 @@ import ldap0.functions
 
 import aedir.process
 
+# Import constants from configuration module
+sys.path.append(os.path.dirname(os.environ.get('AEDIRPWD_CFG', '/opt/ae-dir/etc/ae-dir-pwd/aedirpwd_cnf.py')))
 from aedirpwd_cnf import (
     APP_PATH_PREFIX,
     SMTP_DEBUGLEVEL,

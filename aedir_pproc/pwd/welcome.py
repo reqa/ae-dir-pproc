@@ -3,6 +3,9 @@
 aedir_pproc.pwd.welcome -- Send welcome e-mail to new users which have not set a password yet
 """
 
+import os
+import os.path
+import sys
 import time
 
 import ldap0
@@ -11,6 +14,7 @@ import ldap0.functions
 import aedir.process
 
 # Import constants from configuration module
+sys.path.append(os.path.dirname(os.environ.get('AEDIRPWD_CFG', '/opt/ae-dir/etc/ae-dir-pwd/aedirpwd_cnf.py')))
 from aedirpwd_cnf import (
     APP_PATH_PREFIX,
     FILTERSTR_NO_WELCOME_YET,
