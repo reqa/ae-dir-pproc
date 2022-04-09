@@ -37,7 +37,7 @@ from ldap0.ldapobject import ReconnectLDAPObject
 
 from slapdsock.ldaphelper import LocalLDAPConn
 from slapdsock.handler import SlapdSockHandler
-from slapdsock.service import SlapdSockThreadingServer
+from slapdsock.service import SlapdSockServer
 
 from aedir import init_logger
 
@@ -428,7 +428,7 @@ class PassModHandler(SlapdSockHandler):
         return 'CONTINUE' # end of do_modify()
 
 
-class PassModServer(SlapdSockThreadingServer):
+class PassModServer(SlapdSockServer):
 
     """
     This is used to pass in more parameters to the server instance
@@ -450,10 +450,11 @@ class PassModServer(SlapdSockThreadingServer):
             pwsync_queue,
             bind_and_activate=True,
             log_vars=None,
+            thread_pool_size=3,
         ):
         self._ldap_conn = None
         self.pwsync_queue = pwsync_queue
-        SlapdSockThreadingServer.__init__(
+        SlapdSockServer.__init__(
             self,
             server_address,
             RequestHandlerClass,
@@ -466,6 +467,7 @@ class PassModServer(SlapdSockThreadingServer):
             bind_and_activate,
             monitor_dn=None,
             log_vars=log_vars,
+            thread_pool_size=thread_pool_size,
         )
 
 
