@@ -47,5 +47,10 @@ setup(
         'WTForms',
         'Jinja2',
     ],
+    extras_require={
+        'pwsync':[
+            'slapdsock>=1.3.0',
+        ],
+    },
     zip_safe=False,
 )
